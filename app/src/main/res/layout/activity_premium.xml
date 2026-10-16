@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/themeBg"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp">
+
+    <View
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:layout_marginTop="-60dp"
+        android:layout_marginEnd="-60dp"
+        android:background="?attr/themeGlowBlob1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_back"
+        app:tint="?attr/themeTextPrimary"
+        android:background="@drawable/bg_jarvis_icon_square"
+        android:contentDescription="Back"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/btnBack"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Premium Activation"
+                android:textColor="?attr/themeTextPrimary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Enter your DEV STYLE license key"
+                android:textColor="?attr/themeTextMuted"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                android:background="@drawable/bg_jarvis_action_card"
+                android:padding="18dp">
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/themeTextPrimary"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif" />
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/etKey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_input_field"
+                android:padding="14dp"
+                android:hint="DEV STYLE-API-XXXXXXXX-XXXXXXXX"
+                android:textColor="?attr/themeTextPrimary"
+                android:textColorHint="?attr/themeTextMuted"
+                android:textSize="13sp"
+                android:singleLine="true"
+                android:inputType="text" />
+
+            <Button
+                android:id="@+id/btnCheck"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_jarvis_pill_button"
+                android:text="Check Key"
+                android:textColor="?attr/themeTextPrimary"
+                android:textAllCaps="false"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnActivate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_jarvis_pill_button"
+                android:text="Activate Premium"
+                android:textColor="?attr/themeTextPrimary"
+                android:textAllCaps="false"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="The key is checked with the DEV STYLE backend before activation. Your device token stays on this device — nothing else is sent."
+                android:textColor="?attr/themeTextMuted"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

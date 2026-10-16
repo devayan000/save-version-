@@ -1,0 +1,62 @@
+# Builds the JARVIS Android app and uploads the debug APK as a downloadable artifact.
+# The Gradle wrapper (Gradle 8.9, AGP 8.7.2, Kotlin 2.0.20, Java 17) drives the build.
+
+name: DEV STYLE — JARVIS Android APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (required by AGP 8.7 / Kotlin 2.0)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Android SDK 34 is preinstalled on ubuntu-latest runners; ANDROID_HOME is set automatically.
+      - name: Set up Gradle caching (wrapper 8.9)
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK with the Gradle wrapper (:app assembleDebug)
+        run: ./gradlew :app:assembleDebug --stacktrace --warning-mode all
+
+      - name: Verify the APK was produced
+        run: |
+          APK_COUNT=$(find app/build/outputs/apk -type f -name '*.apk' | wc -l)
+          echo "Found $APK_COUNT APK file(s) under app/build/outputs/apk"
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "::error::No APK was produced. Check the Gradle build logs above."
+            exit 1
+          fi
+          find app/build/outputs/apk -type f -name '*.apk' -exec ls -lh {} \;
+
+      - name: Upload debug APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DEV-STYLE-Jarvis-debug-apk
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
