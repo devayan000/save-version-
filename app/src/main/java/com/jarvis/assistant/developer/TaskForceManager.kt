@@ -3,6 +3,7 @@ package com.jarvis.assistant.developer
 import com.jarvis.assistant.automation.command.CommandExecutor
 import com.jarvis.assistant.automation.command.CommandParser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /**
@@ -30,7 +31,7 @@ object TaskForceManager {
                 if (cmd == null) {
                     "#" + (i + 1) + " '" + step + "' — eta ami bujhlam na, boss"
                 } else {
-                    runCatching { executor.execute(cmd) }
+                    runCatching { runBlocking { executor.execute(cmd) } }
                         .fold(
                             { "#" + (i + 1) + " " + step + " → " + it },
                             { "#" + (i + 1) + " " + step + " → fail: " + (it.message ?: "error") }
