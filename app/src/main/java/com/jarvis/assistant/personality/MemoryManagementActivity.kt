@@ -34,11 +34,11 @@ class MemoryManagementActivity : AppCompatActivity() {
         container.addView(Button(this).apply { text = "Export Memories"; setOnClickListener { exportMemories() } })
         container.addView(Button(this).apply { text = "Import Memories"; setOnClickListener { openImportFile() } })
         container.addView(Button(this).apply { text = "Clear All Memories"; setOnClickListener {
-            MaterialAlertDialogBuilder(this).setTitle("Clear All").setMessage("Delete all saved memories? This cannot be undone.")
+            MaterialAlertDialogBuilder(this@MemoryManagementActivity).setTitle("Clear All").setMessage("Delete all saved memories? This cannot be undone.")
                 .setPositiveButton("Delete") { _, _ -> store.clearAllMemories(); refresh() }.setNegativeButton("Cancel", null).show()
         } })
-        container.addView(Button(this).apply { text = "Clear Summaries"; setOnClickListener { store.clearSummaries(); Toast.makeText(this, "Summaries cleared.", Toast.LENGTH_SHORT).show() } })
-        container.addView(Button(this).apply { text = "Reset Emotional State"; setOnClickListener { PersonalityEngine.resetState(); Toast.makeText(this, "Emotional state reset.", Toast.LENGTH_SHORT).show() } })
+        container.addView(Button(this).apply { text = "Clear Summaries"; setOnClickListener { store.clearSummaries(); Toast.makeText(this@MemoryManagementActivity, "Summaries cleared.", Toast.LENGTH_SHORT).show() } })
+        container.addView(Button(this).apply { text = "Reset Emotional State"; setOnClickListener { PersonalityEngine.resetState(); Toast.makeText(this@MemoryManagementActivity, "Emotional state reset.", Toast.LENGTH_SHORT).show() } })
         listContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 16, 0, 0) }
         val scroll = ScrollView(this).apply { addView(listContainer); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f) }
         container.addView(scroll)

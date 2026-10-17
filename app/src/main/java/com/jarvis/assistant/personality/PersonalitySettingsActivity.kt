@@ -114,7 +114,7 @@ class PersonalitySettingsActivity : AppCompatActivity() {
         })
 
         val scroll = ScrollView(this).apply { addView(container); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f) }
-        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(scroll); addView(Button(this).apply { text = "Close"; setOnClickListener { finish() } }) }
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(scroll); addView(Button(this@PersonalitySettingsActivity).apply { text = "Close"; setOnClickListener { finish() } }) }
         setContentView(root)
     }
 

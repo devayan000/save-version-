@@ -120,14 +120,15 @@ class ConversationMemoryStore(private val context: Context) {
     fun addSummary(topic: String, summary: String, pendingTasks: String) {
         val s = ConversationSummary(UUID.randomUUID().toString(), System.currentTimeMillis(), topic, summary, pendingTasks)
         val arr = loadSummaries()
-        // Keep last 50 summaries
-        if (arr.length() >= 50) {
-            val newList = (1 until arr.length()).map { arr.getJSONObject(it) }.toMutableList()
-            arr.remove()
-            for (i in newList.indices) arr.remove()
-        }
         arr.put(s.toJson())
-        saveSummaries(arr)
+        // Keep last 50 summaries
+        if (arr.length() > 50) {
+            val newArr = JSONArray()
+            for (i in (arr.length() - 50) until arr.length()) newArr.put(arr.getJSONObject(i))
+            saveSummaries(newArr)
+        } else {
+            saveSummaries(arr)
+        }
     }
 
     fun getLastSummary(): ConversationSummary? {

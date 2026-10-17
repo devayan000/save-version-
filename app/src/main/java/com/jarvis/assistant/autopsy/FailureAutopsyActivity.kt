@@ -31,7 +31,7 @@ class FailureAutopsyActivity : AppCompatActivity() {
         TextView(this).apply { text = "Failure Autopsy"; textSize = 20f; setPadding(0, 0, 0, 16); container.addView(this) }
         container.addView(Button(this).apply { text = "Export All Reports"; setOnClickListener { exportReports() } })
         container.addView(Button(this).apply { text = "Clear All"; setOnClickListener {
-            MaterialAlertDialogBuilder(this).setTitle("Clear All Records").setMessage("Delete all failure records?")
+            MaterialAlertDialogBuilder(this@FailureAutopsyActivity).setTitle("Clear All Records").setMessage("Delete all failure records?")
                 .setPositiveButton("Delete") { _, _ -> store.clearAll(); refresh() }.setNegativeButton("Cancel", null).show()
         } })
         listContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 16, 0, 0) }
@@ -60,7 +60,7 @@ class FailureAutopsyActivity : AppCompatActivity() {
                 val text = store.formatReport(record)
                 val clip = android.content.ClipData.newPlainText("Failure Report", text)
                 (getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(clip)
-                Toast.makeText(this, "Report copied.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@FailureAutopsyActivity, "Report copied.", Toast.LENGTH_SHORT).show()
             } })
             if (!record.resolved) btnRow.addView(Button(this).apply { text = "Resolve"; setOnClickListener { store.markResolved(record.id); refresh() } })
             btnRow.addView(Button(this).apply { text = "Delete"; setOnClickListener { store.deleteRecord(record.id); refresh() } })
@@ -72,16 +72,16 @@ class FailureAutopsyActivity : AppCompatActivity() {
     private fun showDetail(id: String) {
         val record = store.getAll().find { it.id == id } ?: return
         val report = store.formatReport(record)
-        MaterialAlertDialogBuilder(this).setTitle("Failure Detail")
+        MaterialAlertDialogBuilder(this@FailureAutopsyActivity).setTitle("Failure Detail")
             .setMessage(report)
             .setPositiveButton("Close", null)
             .setNeutralButton("AI Diagnosis") { _, _ ->
-                MaterialAlertDialogBuilder(this).setTitle("AI Diagnosis Consent")
+                MaterialAlertDialogBuilder(this@FailureAutopsyActivity).setTitle("AI Diagnosis Consent")
                     .setMessage("This will share the diagnostic report (with sensitive content redacted) with your configured AI provider for analysis. Do you consent?")
                     .setPositiveButton("Consent") { _, _ ->
                         val clip = android.content.ClipData.newPlainText("Failure Report for AI", report)
                         (getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(clip)
-                        Toast.makeText(this, "Report copied. Paste into your AI provider for diagnosis.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@FailureAutopsyActivity, "Report copied. Paste into your AI provider for diagnosis.", Toast.LENGTH_LONG).show()
                     }.setNegativeButton("Cancel", null).show()
             }.show()
     }
