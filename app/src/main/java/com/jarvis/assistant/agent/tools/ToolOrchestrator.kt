@@ -12,7 +12,8 @@ object ToolOrchestrator {
         Tool("standby", "Enter low-power standby mode with offline wake-word detection", false),
         Tool("unlock_request", "Request Android to show the unlock screen (requires PIN/biometric)", true),
         Tool("memory", "Store or recall user-approved facts", false),
-        Tool("github_research", "Search GitHub repositories and inspect README/license so the user can select one (Developer Agent stage 1)", false)
+        Tool("github_research", "Search GitHub repositories and inspect README/license so the user can select one (Developer Agent stage 1)", false),
+        Tool("run_shell", "Run a shell command in the Jarvis background terminal (Termux-style) and return its output", true)
     )
     fun availableTools(): List<Tool> = registry
     fun describe(input: String): String {
