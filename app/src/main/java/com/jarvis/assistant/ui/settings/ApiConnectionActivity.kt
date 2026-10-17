@@ -27,6 +27,7 @@ class ApiConnectionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityApiConnectionBinding
     private val preferences by lazy { JarvisApp.instance.preferences }
+    private val imgbbPreferences by lazy { JarvisApp.instance.imgbbPreferences }
     private val testHttpClient = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)
@@ -54,6 +55,7 @@ class ApiConnectionActivity : AppCompatActivity() {
         binding.etApiKey.setText(preferences.apiKey)
         binding.etCustomEndpoint.setText(preferences.customEndpoint)
         binding.etCustomChatModel.setText(preferences.customChatModel)
+        updateImgbbStatus()
 
         if (!preferences.canStoreApiKeySecurely) {
             binding.tvLiveStatus.text = "SECURE STORAGE UNAVAILABLE • API KEY DISABLED"
@@ -120,6 +122,43 @@ class ApiConnectionActivity : AppCompatActivity() {
         binding.btnSaveConnection.setOnClickListener {
             saveAndApply()
         }
+
+        binding.btnImgbbKey.setOnClickListener {
+            showImgbbKeyDialog()
+        }
+    }
+
+    private fun updateImgbbStatus() {
+        val hasKey = runCatching { imgbbPreferences.imgbbApiKey.isNotBlank() }.getOrDefault(false)
+        binding.tvImgbbStatus.text = if (hasKey) {
+            "ImgBB key configured - saved securely"
+        } else {
+            "No ImgBB key configured"
+        }
+    }
+
+    private fun showImgbbKeyDialog() {
+        val input = android.widget.EditText(this).apply {
+            hint = "ImgBB API key"
+            setText(runCatching { imgbbPreferences.imgbbApiKey }.getOrDefault(""))
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setPadding(48, 32, 48, 8)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("ImgBB API Key")
+            .setMessage("Uploads go through api.imgbb.com. Leave blank to remove the saved key.")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                try {
+                    imgbbPreferences.imgbbApiKey = input.text?.toString()?.trim().orEmpty()
+                    Toast.makeText(this, "ImgBB key saved securely", Toast.LENGTH_SHORT).show()
+                } catch (e: IllegalStateException) {
+                    Snackbar.make(binding.root, e.message ?: "Secure storage is unavailable.", Snackbar.LENGTH_LONG).show()
+                }
+                updateImgbbStatus()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun testConnection(apiKey: String, endpoint: String?) {
