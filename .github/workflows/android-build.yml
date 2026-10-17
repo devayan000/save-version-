@@ -24,7 +24,13 @@ jobs:
           java-version: '17'
 
       - name: Compile and test native changes
-        run: chmod +x gradlew && ./gradlew :app:compileDebugKotlin :app:processDebugResources :app:testDebugUnitTest --stacktrace
+        run: |
+          set -o pipefail
+          chmod +x gradlew && ./gradlew :app:compileDebugKotlin :app:processDebugResources :app:testDebugUnitTest --stacktrace 2>&1 | tee gradle_output.log
+
+      - name: Show Kotlin compile errors
+        if: failure()
+        run: grep -E "e: file|error:|FAILURE" gradle_output.log | head -80 || true
 
       - name: Restore the permanent signing key
         uses: ./.github/actions/jarvis-signing
