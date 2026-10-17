@@ -2,7 +2,10 @@ package com.jarvis.assistant.personality
 
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class PersonalityEngineTest {
     @Test fun returnGreetingShortAbsenceReturnsEmpty() {
         val greeting = PersonalityEngine.returnGreeting(60_000, "Android project", "FRIENDLY")
