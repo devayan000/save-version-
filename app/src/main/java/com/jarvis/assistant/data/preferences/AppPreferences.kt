@@ -302,7 +302,7 @@ class AppPreferences(context: Context) {
         set(value) = prefs.edit().putInt(KEY_SITE_AGENTS, value.coerceIn(1, 100)).apply()
 
     var personality: String
-        get() = prefs.getString(KEY_PERSONALITY, GeminiConstants.PERSONALITY_ASSISTANT) ?: GeminiConstants.PERSONALITY_ASSISTANT
+        get() = prefs.getString(KEY_PERSONALITY, GeminiConstants.PERSONALITY_GIRLFRIEND) ?: GeminiConstants.PERSONALITY_GIRLFRIEND
         set(value) = prefs.edit().putString(KEY_PERSONALITY, value).apply()
 
     var userName: String
