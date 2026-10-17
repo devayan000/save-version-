@@ -529,6 +529,17 @@ object CommandParser {
             return ParsedCommandResult(JarvisCommand.GoToBackground, 1.0f, "GO_TO_BACKGROUND")
         }
 
+        // 10c. Lock the phone ("lock my phone", "phone lock koro") - official Android lock
+        if (clean.matches(Regex("$prefix(?:jarvis\\s+)?(?:lock(?:\\s+(?:my\\s+)?(?:the\\s+)?(?:phone|device|screen))?|phone\\s+(?:ta\\s+)?lock(?:\\s+(?:koro|kor|kore\\s+d?ao|down|korba))?|screen\\s+(?:ta\\s+)?lock(?:\\s+(?:koro|kor))?)$", RegexOption.IGNORE_CASE))) {
+            return ParsedCommandResult(JarvisCommand.LockPhone, 1.0f, "LOCK_PHONE")
+        }
+
+        // 10d. On-Guard (thief watch) toggle - "phone ongur e jao", "on guard mode on/off"
+        if (Regex("\\b(?:on[\\s-]*(?:guard|gurd|gard|god)|onguard|ongurd|ongur|ongard|ongod|ungur)\\b", RegexOption.IGNORE_CASE).containsMatchIn(clean)) {
+            val isOff = Regex("\\b(off|bondho|band|stop|off\\s+koro|bond\\s+koro)\\b", RegexOption.IGNORE_CASE).containsMatchIn(clean)
+            return ParsedCommandResult(JarvisCommand.ToggleOnGuard(enable = !isOff), 0.98f, "ON_GUARD")
+        }
+
         // 11. Open Apps (Strict: Must start with open/launch, not casual words)
         val openAppRegex = Regex("$prefix(?:open|launch)\\s+(?:the\\s+)?([a-zA-Z0-9\\s]+)$", RegexOption.IGNORE_CASE)
         val openMatch = openAppRegex.find(clean)
