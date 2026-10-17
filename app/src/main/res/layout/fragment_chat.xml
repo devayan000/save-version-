@@ -167,6 +167,35 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- Chip 3: Google Workspace -->
+            <LinearLayout
+                android:id="@+id/chipGoogleWorkspace"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/bg_jarvis_chip"
+                android:paddingStart="12dp"
+                android:paddingEnd="14dp"
+                android:layout_marginEnd="8dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_plus"
+                    app:tint="?attr/themeTextSecondary"
+                    android:layout_marginEnd="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Google"
+                    android:textColor="?attr/themeTextPrimary"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
