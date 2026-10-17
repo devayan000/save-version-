@@ -2,7 +2,10 @@ package com.jarvis.assistant.autopsy
 
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class FailureAutopsyTest {
     @Test fun failureRecordJsonRoundTrip() {
         val record = FailureRecord("f1", "Upload", 123L, "Network", "Timeout",
