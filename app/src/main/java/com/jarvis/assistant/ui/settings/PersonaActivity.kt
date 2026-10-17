@@ -15,7 +15,7 @@ class PersonaActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPersonaBinding
     private val preferences by lazy { JarvisApp.instance.preferences }
 
-    private var currentSelectedPersona = GeminiConstants.PERSONALITY_ASSISTANT
+    private var currentSelectedPersona = GeminiConstants.PERSONALITY_GIRLFRIEND
     private var isPremiumOperator = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,7 +110,7 @@ class PersonaActivity : AppCompatActivity() {
     private fun updatePersonaPreview() {
         if (!::binding.isInitialized) return
         val persona = when (currentSelectedPersona) {
-            GeminiConstants.PERSONALITY_GIRLFRIEND -> "Pari"
+            GeminiConstants.PERSONALITY_GIRLFRIEND -> "Girlfriend Mode"
             GeminiConstants.PERSONALITY_BOYFRIEND -> "Kabir"
             GeminiConstants.PERSONALITY_TECHGPT_X -> "DEV STYLE"
             else -> "Jarvis Pro"
@@ -157,7 +157,7 @@ class PersonaActivity : AppCompatActivity() {
         preferences.personality = currentSelectedPersona
 
         val personaDisplayName = when (currentSelectedPersona) {
-            GeminiConstants.PERSONALITY_GIRLFRIEND -> "Pari (Girlfriend Mode)"
+            GeminiConstants.PERSONALITY_GIRLFRIEND -> "Girlfriend Mode"
             GeminiConstants.PERSONALITY_BOYFRIEND -> "Kabir (Boyfriend Mode)"
             GeminiConstants.PERSONALITY_TECHGPT_X -> "DEV STYLE Neural Core"
             else -> "Jarvis Pro"
