@@ -67,7 +67,7 @@ object AgentEngine {
             }
         }
         if (FeatureFlags.isEnabled(FeatureFlags.userMemory)) {
-            val memoryBlock = UserMemory.contextBlock(context, userInput)
+            val memoryBlock = UserMemory.contextBlock(context, request)
             if (memoryBlock.isNotBlank()) sb.insert(0, memoryBlock)
             UserMemory.observe(context, userInput)
         }
