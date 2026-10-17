@@ -84,19 +84,19 @@ object VoiceRecognitionService {
     fun configureAudioRecord(record: AudioRecord) {
         runCatching {
             if (noiseSuppressionEnabled) {
-                val ns = android.media.audiofx.NoiseSuppressor.createAudioSourceNoiseSuppressor(record.audioSessionId)
+                val ns = android.media.audiofx.NoiseSuppressor.create(record.audioSessionId)
                 ns?.enabled = true
             }
         }
         runCatching {
             if (echoCancellationEnabled) {
-                val ec = android.media.audiofx.AcousticEchoCanceler.createAudioSourceAcousticEchoCanceler(record.audioSessionId)
+                val ec = android.media.audiofx.AcousticEchoCanceler.create(record.audioSessionId)
                 ec?.enabled = true
             }
         }
         runCatching {
             if (autoGainEnabled) {
-                val ag = android.media.audiofx.AutomaticGainControl.createAudioSourceAutomaticGainControl(record.audioSessionId)
+                val ag = android.media.audiofx.AutomaticGainControl.create(record.audioSessionId)
                 ag?.enabled = true
             }
         }
