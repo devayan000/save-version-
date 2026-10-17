@@ -378,6 +378,31 @@
                     android:textSize="14sp" />
             </LinearLayout>
 
+            <!-- ImgBB Image Hosting -->
+            <TextView
+                android:id="@+id/tvImgbbStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_jarvis_card"
+                android:padding="18dp"
+                android:layout_marginBottom="10dp"
+                android:text="ImgBB API Key: not configured (api.imgbb.com)"
+                android:textColor="?attr/themeTextPrimary"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnImgbbKey"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginBottom="18dp"
+                android:text="Set / Update ImgBB Key"
+                android:textColor="?attr/themeAccent"
+                android:textSize="12sp"
+                android:textAllCaps="false"
+                android:fontFamily="sans-serif-medium" />
+
         </LinearLayout>
     </ScrollView>
 
