@@ -11,7 +11,8 @@ object ToolOrchestrator {
         Tool("text_to_speech", "Speak a reply aloud using Android TTS", false),
         Tool("standby", "Enter low-power standby mode with offline wake-word detection", false),
         Tool("unlock_request", "Request Android to show the unlock screen (requires PIN/biometric)", true),
-        Tool("memory", "Store or recall user-approved facts", false)
+        Tool("memory", "Store or recall user-approved facts", false),
+        Tool("github_research", "Search GitHub repositories and inspect README/license so the user can select one (Developer Agent stage 1)", false)
     )
     fun availableTools(): List<Tool> = registry
     fun describe(input: String): String {
