@@ -350,15 +350,8 @@ class SettingsFragment : Fragment() {
     private fun showPerformanceDashboardDialog() {
         val ctx = requireContext()
         val d = PerformanceMonitoringService.getDashboard(ctx)
-        val report = "Total Commands: " + d.totalCommands + "
-Successful: " + d.successfulCommands + "
-Failed: " + d.failedCommands + "
-Avg Latency: " + d.avgLatencyMs + " ms
-Recognition Failure: " + (d.recognitionFailureRate * 100).toInt() + "%
-Tool Failure: " + (d.toolFailureRate * 100).toInt() + "%
-Screenshot Failure: " + (d.screenshotFailureRate * 100).toInt() + "%
-Bugs Detected: " + d.recentUnresolvedBugs + (if (d.mostFailingFeatures.isNotEmpty()) "
-Most Failing: " + d.mostFailingFeatures.joinToString(", ") { it.first + " (" + it.second + ")" } else "")
+        val nl = 10.toChar()
+        val report = "Total Commands: " + d.totalCommands + nl + "Successful: " + d.successfulCommands + nl + "Failed: " + d.failedCommands + nl + "Avg Latency: " + d.avgLatencyMs + " ms" + nl + "Recognition Failure: " + (d.recognitionFailureRate * 100).toInt() + "%" + nl + "Tool Failure: " + (d.toolFailureRate * 100).toInt() + "%" + nl + "Screenshot Failure: " + (d.screenshotFailureRate * 100).toInt() + "%" + nl + "Bugs Detected: " + d.recentUnresolvedBugs + (if (d.mostFailingFeatures.isNotEmpty()) nl + "Most Failing: " + d.mostFailingFeatures.joinToString(", ") { it.first + " (" + it.second + ")" } else "")
         MaterialAlertDialogBuilder(ctx).setTitle("Performance Dashboard").setMessage(report).setPositiveButton("Close", null).show()
     }
 

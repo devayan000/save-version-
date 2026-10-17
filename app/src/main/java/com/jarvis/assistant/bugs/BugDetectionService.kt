@@ -70,7 +70,10 @@ object BugDetectionService {
     }
 
     private fun severityToPriority(s: Severity): String = when (s) {
-        Severity.CRITICAL -> "P0", Severity.HIGH -> "P1", Severity.MEDIUM -> "P2", Severity.LOW -> "P3"
+        Severity.CRITICAL -> "P0"
+        Severity.HIGH -> "P1"
+        Severity.MEDIUM -> "P2"
+        Severity.LOW -> "P3"
     }
 
     private fun hypothesize(type: ErrorType, msg: String?, actual: String): String = when (type) {
