@@ -284,7 +284,7 @@ class SettingsFragment : Fragment() {
         val ctx = requireContext()
         val container = android.widget.LinearLayout(ctx).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(48, 32, 48, 16) }
         android.widget.TextView(ctx).apply { text = if (PremiumAccessService.isValidated(ctx)) "Premium: ACTIVE" else "Premium: Not activated"; setPadding(0, 0, 0, 16); container.addView(this) }
-        val endpoint = android.widget.EditText(ctx).apply { hint = "Validation endpoint URL (HTTPS)"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI; setText(PremiumAccessService.getValidationEndpoint(ctx)) }
+        val endpoint = android.widget.EditText(ctx).apply { hint = "https://your-app.base44.app/functions/validatePremiumKey"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI; setText(PremiumAccessService.getValidationEndpoint(ctx)) }
         container.addView(endpoint)
         val key = android.widget.EditText(ctx).apply { hint = "Premium access key"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
         container.addView(key)
