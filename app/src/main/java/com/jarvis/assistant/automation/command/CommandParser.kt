@@ -540,6 +540,46 @@ object CommandParser {
             return ParsedCommandResult(JarvisCommand.ToggleOnGuard(enable = !isOff), 0.98f, "ON_GUARD")
         }
 
+        // 10e. Owner name ("call me Ahona", "my name is Ahona", "amar nam Ahona")
+        if (Regex("^(?:please\\s+)?(?:can\\s+you\\s+|could\\s+you\\s+)?(?:call\\s+me\\b|my\\s+name\\s+is\\b|amar\\s+(?:nam|naam|nome)\\b)", RegexOption.IGNORE_CASE).containsMatchIn(clean)) {
+            val nameMatch = Regex("^(?:please\\s+)?(?:can\\s+you\\s+|could\\s+you\\s+)?(?:call\\s+me\\s+|my\\s+name\\s+is\\s+|amar\\s+(?:nam|naam|nome)\\s+|amake\\s+)([a-zA-Z]{2,20})\\s*(?:bole\\s+dako|bole\\s+daak|bolo|dhoro)?$", RegexOption.IGNORE_CASE).find(clean)
+            if (nameMatch != null) {
+                val ownerName = nameMatch.groupValues[1].trim().replaceFirstChar { it.uppercase() }
+                val notAName = setOf("back", "later", "now", "again", "boss", "sir")
+                if (!notAName.contains(ownerName.lowercase(Locale.ROOT))) {
+                    return ParsedCommandResult(JarvisCommand.SetUserName(ownerName), 1.0f, "SET_USER_NAME")
+                }
+            }
+        }
+
+        // 10f. Custom wake word ("wake word ahona", "wake me up with ahona", "ahona diye jagao")
+        if (Regex("\\b(?:wake\\s*word|wake\\s+(?:me\\s+)?up\\s+(?:with|by|using)|jagao|jagaya)\\b", RegexOption.IGNORE_CASE).containsMatchIn(clean)) {
+            val wakeMatch = Regex("(?:wake\\s*word\\s*(?:to|as|add)?\\s*|wake\\s+(?:me\\s+)?up\\s+(?:with|by|using)\\s+(?:the\\s+word\\s+|outo\\s+|hoto\\s+)?|jagao\\s+(?:amate\\s+)?|jagaya\\s+)(?:outo\\s+|hoto\\s+)?([a-zA-Z]{2,20})(?:\\s+diye)?\\s*$", RegexOption.IGNORE_CASE).find(clean)
+            if (wakeMatch != null) {
+                val wakeWord = wakeMatch.groupValues[1].trim()
+                if (!wakeWord.equals("jarvis", ignoreCase = true)) {
+                    return ParsedCommandResult(JarvisCommand.SetWakeWord(wakeWord.replaceFirstChar { it.lowercase() }), 1.0f, "SET_WAKE_WORD")
+                }
+            }
+        }
+
+        // 10g. Skill Evolution Lab ("skill lab", "run skill evolution lab")
+        if (Regex("^(?:please\\s+|jarvis\\s+)?(?:run\\s+|open\\s+|start\\s+)?skill\\s*(?:evolution\\s*)?lab$", RegexOption.IGNORE_CASE).containsMatchIn(clean)) {
+            return ParsedCommandResult(JarvisCommand.SkillLab, 1.0f, "SKILL_LAB")
+        }
+
+        // 10h. Parallel Universe Planner ("plan my day", "jarvis plan a trip")
+        if (Regex("^(?:please\\s+|jarvis[,:]?\\s+)?plan\\b", RegexOption.IGNORE_CASE).containsMatchIn(clean) ||
+            Regex("^(?:please\\s+|jarvis[,:]?\\s+)?(?:planning\\b|porikolpona\\b)", RegexOption.IGNORE_CASE).containsMatchIn(clean)) {
+            val planMatch = Regex("^(?:please\\s+|jarvis[,:]?\\s+)?(?:plan\\s+(?:for\\s+|of\\s+|to\\s+|koro\\s+)?|planning\\s+(?:for\\s+)?|porikolpona\\s+(?:koro\\s+|for\\s+)?)(.{3,200})$", RegexOption.IGNORE_CASE).find(clean)
+            if (planMatch != null) {
+                val goal = planMatch.groupValues[1].trim()
+                if (goal.isNotBlank()) {
+                    return ParsedCommandResult(JarvisCommand.PlanGoal(goal), 0.97f, "PLAN_GOAL")
+                }
+            }
+        }
+
         // 11. Open Apps (Strict: Must start with open/launch, not casual words)
         val openAppRegex = Regex("$prefix(?:open|launch)\\s+(?:the\\s+)?([a-zA-Z0-9\\s]+)$", RegexOption.IGNORE_CASE)
         val openMatch = openAppRegex.find(clean)
