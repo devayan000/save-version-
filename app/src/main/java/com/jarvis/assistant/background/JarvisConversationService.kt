@@ -2827,6 +2827,23 @@ class JarvisConversationService : Service() {
             executeDetectedCommand(cmd, cleanSpeech)
         } else {
             Log.d("JarvisService", "No command match from user text (confidence=${parsed.confidence})")
+            // DEV STYLE: Long voice command - a long spoken sentence can carry several actions.
+            // Split it on connectors and run every part that maps to a known command.
+            val multiSteps = com.jarvis.assistant.automation.command.MultiCommandParser.parseCommands(cleanSpeech)
+            if (multiSteps.isNotEmpty()) {
+                lastHandledCommandText = cleanSpeech
+                multiSteps.forEach { step ->
+                    val stepCmd = step.command
+                    if (stepCmd != null) {
+                        Log.i("JarvisService", "LONG VOICE COMMAND -> step [${step.matchedPattern}] confidence=${step.confidence}: $stepCmd")
+                        executeDetectedCommand(stepCmd, cleanSpeech)
+                    }
+                }
+                val skippedParts = com.jarvis.assistant.automation.command.MultiCommandParser.unparsedSegments(cleanSpeech)
+                if (skippedParts.isNotEmpty()) {
+                    announce("Ei ta bujhlam na: " + skippedParts.joinToString(", "))
+                }
+            }
         }
     }
 
