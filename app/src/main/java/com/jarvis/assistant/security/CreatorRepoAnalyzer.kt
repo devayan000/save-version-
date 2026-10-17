@@ -34,7 +34,7 @@ object CreatorRepoAnalyzer {
     suspend fun analyze(context: Context, repoInput: String): String = withContext(Dispatchers.IO) {
         val ref = parse(repoInput)
             ?: return@withContext "I could not read that repository link. Paste it like https://github.com/owner/repo"
-        val token = runCatching { JarvisApp.instance.githubPreferences.token }.getOrNull().orBlank()
+        val token = runCatching { JarvisApp.instance.githubPreferences.token }.getOrNull().orEmpty()
         try {
             val headers = mutableMapOf(
                 "Accept" to "application/vnd.github+json",
