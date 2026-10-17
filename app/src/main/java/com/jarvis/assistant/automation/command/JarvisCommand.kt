@@ -35,4 +35,8 @@ sealed class JarvisCommand {
     data class Decision(val topic: String) : JarvisCommand()
 
     object GoToBackground : JarvisCommand()
+
+    object LockPhone : JarvisCommand()
+
+    data class ToggleOnGuard(val enable: Boolean) : JarvisCommand()
 }
