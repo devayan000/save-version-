@@ -24,6 +24,14 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.jarvis.assistant.premium.PremiumAccessService
+import com.jarvis.assistant.security.CreatorAuthenticationService
+import com.jarvis.assistant.bugs.BugReportRepository
+import com.jarvis.assistant.performance.PerformanceMonitoringService
+import com.jarvis.assistant.singing.SingingService
+import com.jarvis.assistant.tools.GoogleSearchService
+import android.content.ClipData
+import android.content.ClipboardManager
 
 class SettingsFragment : Fragment() {
 
@@ -200,10 +208,19 @@ class SettingsFragment : Fragment() {
 
         binding.rowAppIdentity.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
-                .setTitle("JARVIS App Identity")
-                .setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext()))
-                .setPositiveButton("Close", null)
-                .setNeutralButton("Check for Updates") { _, _ -> showUpdateDialog() }
+                .setTitle("Jarvis Control Center")
+                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings")) { _, which ->
+                    when (which) {
+                        0 -> MaterialAlertDialogBuilder(requireContext()).setTitle("JARVIS App Identity").setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext())).setPositiveButton("Close", null).show()
+                        1 -> showUpdateDialog()
+                        2 -> showPremiumAccessDialog()
+                        3 -> showCreatorVerificationDialog()
+                        4 -> showBugCenterDialog()
+                        5 -> showPerformanceDashboardDialog()
+                        6 -> showSingingSettingsDialog()
+                        7 -> showSearchSettingsDialog()
+                    }
+                }
                 .show()
         }
 
@@ -261,6 +278,116 @@ class SettingsFragment : Fragment() {
                 .setNegativeButton("Later", null)
                 .show()
         }
+    }
+
+    private fun showPremiumAccessDialog() {
+        val ctx = requireContext()
+        val container = android.widget.LinearLayout(ctx).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(48, 32, 48, 16) }
+        android.widget.TextView(ctx).apply { text = if (PremiumAccessService.isValidated(ctx)) "Premium: ACTIVE" else "Premium: Not activated"; setPadding(0, 0, 0, 16); container.addView(this) }
+        val endpoint = android.widget.EditText(ctx).apply { hint = "Validation endpoint URL (HTTPS)"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI; setText(PremiumAccessService.getValidationEndpoint(ctx)) }
+        container.addView(endpoint)
+        val key = android.widget.EditText(ctx).apply { hint = "Premium access key"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
+        container.addView(key)
+        MaterialAlertDialogBuilder(ctx).setTitle("Premium Access").setView(android.widget.ScrollView(ctx).apply { addView(container) })
+            .setPositiveButton("Check Key") { _, _ ->
+                val ep = endpoint.text.toString().trim()
+                val k = key.text.toString().trim()
+                if (ep.isNotBlank()) PremiumAccessService.setValidationEndpoint(ctx, ep)
+                if (k.isBlank()) { Toast.makeText(ctx, "Enter a key first.", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                Toast.makeText(ctx, "Validating...", Toast.LENGTH_SHORT).show()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val result = withContext(Dispatchers.IO) { PremiumAccessService.validate(ctx, k) }
+                    if (result.valid) Toast.makeText(ctx, "Premium activated! Features: " + result.features.joinToString(", "), Toast.LENGTH_LONG).show()
+                    else { val msg = if (result.isNetworkError) "Network error: " + result.error else result.error; Toast.makeText(ctx, msg ?: "Invalid key", Toast.LENGTH_LONG).show() }
+                }
+            }
+            .setNegativeButton("Get Key (WhatsApp)") { _, _ -> if (!PremiumAccessService.openWhatsAppForKey(ctx)) Toast.makeText(ctx, "WhatsApp not available.", Toast.LENGTH_SHORT).show() }
+            .setNeutralButton("Revoke") { _, _ -> PremiumAccessService.revoke(ctx); Toast.makeText(ctx, "Premium revoked.", Toast.LENGTH_SHORT).show() }
+            .show()
+    }
+
+    private fun showCreatorVerificationDialog() {
+        val ctx = requireContext()
+        val container = android.widget.LinearLayout(ctx).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(48, 32, 48, 16) }
+        android.widget.TextView(ctx).apply { text = if (CreatorAuthenticationService.isCreator(ctx)) "Creator: VERIFIED" else "Creator: Not verified"; setPadding(0, 0, 0, 16); container.addView(this) }
+        val key = android.widget.EditText(ctx).apply { hint = "Creator verification key"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
+        container.addView(key)
+        MaterialAlertDialogBuilder(ctx).setTitle("Creator Verification").setView(android.widget.ScrollView(ctx).apply { addView(container) })
+            .setPositiveButton("Verify") { _, _ ->
+                if (CreatorAuthenticationService.verify(ctx, key.text.toString().trim())) Toast.makeText(ctx, "Creator verified! Debug Center unlocked.", Toast.LENGTH_LONG).show()
+                else Toast.makeText(ctx, "Invalid creator key.", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Close", null)
+            .setNeutralButton("Revoke") { _, _ -> CreatorAuthenticationService.revoke(ctx); Toast.makeText(ctx, "Creator access revoked.", Toast.LENGTH_SHORT).show() }
+            .show()
+    }
+
+    private fun showBugCenterDialog() {
+        val ctx = requireContext()
+        if (!CreatorAuthenticationService.isCreator(ctx)) { Toast.makeText(ctx, "Creator verification required.", Toast.LENGTH_LONG).show(); return }
+        val repo = BugReportRepository(ctx)
+        val bugs = repo.loadAll()
+        if (bugs.isEmpty()) { MaterialAlertDialogBuilder(ctx).setTitle("BUGS, ERRORS & IMPROVEMENTS").setMessage("No bugs detected yet.").setPositiveButton("Close", null).show(); return }
+        val items = bugs.map { it.bugId + " | " + it.feature + " | " + it.severity + " | " + it.status }.toTypedArray()
+        val selected = booleanArrayOf(*BooleanArray(bugs.size))
+        MaterialAlertDialogBuilder(ctx).setTitle("BUGS, ERRORS & IMPROVEMENTS (" + bugs.size + ")").setMultiChoiceItems(items, selected) { _, _, _ -> }
+            .setPositiveButton("Copy Selected") { _, _ ->
+                val sel = bugs.filterIndexed { i, _ -> selected[i] }
+                if (sel.isEmpty()) { Toast.makeText(ctx, "No bugs selected.", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                val clipboard = ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("Jarvis Bugs", repo.copyToClipboardText(sel)))
+                Toast.makeText(ctx, "Copied " + sel.size + " bugs to clipboard.", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Export JSON") { _, _ ->
+                val clipboard = ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("Jarvis Bugs JSON", repo.exportJson(bugs)))
+                Toast.makeText(ctx, "JSON exported to clipboard.", Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton("Clear Resolved") { _, _ -> repo.clearResolved(); Toast.makeText(ctx, "Resolved bugs cleared.", Toast.LENGTH_SHORT).show() }
+            .show()
+    }
+
+    private fun showPerformanceDashboardDialog() {
+        val ctx = requireContext()
+        val d = PerformanceMonitoringService.getDashboard(ctx)
+        val report = "Total Commands: " + d.totalCommands + "
+Successful: " + d.successfulCommands + "
+Failed: " + d.failedCommands + "
+Avg Latency: " + d.avgLatencyMs + " ms
+Recognition Failure: " + (d.recognitionFailureRate * 100).toInt() + "%
+Tool Failure: " + (d.toolFailureRate * 100).toInt() + "%
+Screenshot Failure: " + (d.screenshotFailureRate * 100).toInt() + "%
+Bugs Detected: " + d.recentUnresolvedBugs + (if (d.mostFailingFeatures.isNotEmpty()) "
+Most Failing: " + d.mostFailingFeatures.joinToString(", ") { it.first + " (" + it.second + ")" } else "")
+        MaterialAlertDialogBuilder(ctx).setTitle("Performance Dashboard").setMessage(report).setPositiveButton("Close", null).show()
+    }
+
+    private fun showSingingSettingsDialog() {
+        val ctx = requireContext()
+        val container = android.widget.LinearLayout(ctx).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(48, 32, 48, 16) }
+        android.widget.TextView(ctx).apply { text = "Set a singing provider endpoint to generate original songs with actual sung audio. Normal TTS is not singing."; setPadding(0, 0, 0, 16); container.addView(this) }
+        val endpoint = android.widget.EditText(ctx).apply { hint = "Singing endpoint URL (HTTPS)"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI; setText(SingingService.getEndpoint(ctx)) }
+        container.addView(endpoint)
+        val genre = android.widget.EditText(ctx).apply { hint = "Genre (pop, rock, classical...)"; setText("pop") }
+        container.addView(genre)
+        val mood = android.widget.EditText(ctx).apply { hint = "Mood (happy, sad, calm...)"; setText("happy") }
+        container.addView(mood)
+        MaterialAlertDialogBuilder(ctx).setTitle("Singing Settings").setView(android.widget.ScrollView(ctx).apply { addView(container) })
+            .setPositiveButton("Save") { _, _ -> SingingService.setEndpoint(ctx, endpoint.text.toString().trim()); SingingService.setStyle(ctx, genre.text.toString().trim(), "medium", mood.text.toString().trim(), "warm"); Toast.makeText(ctx, "Singing settings saved.", Toast.LENGTH_SHORT).show() }
+            .setNegativeButton("Cancel", null).show()
+    }
+
+    private fun showSearchSettingsDialog() {
+        val ctx = requireContext()
+        val container = android.widget.LinearLayout(ctx).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(48, 32, 48, 16) }
+        android.widget.TextView(ctx).apply { text = "Set a search provider endpoint to enable Google Search. Without this, search requests create bug reports."; setPadding(0, 0, 0, 16); container.addView(this) }
+        val endpoint = android.widget.EditText(ctx).apply { hint = "Search endpoint URL (use {query} placeholder)"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI; setText(GoogleSearchService.getEndpoint(ctx)) }
+        container.addView(endpoint)
+        val apiKey = android.widget.EditText(ctx).apply { hint = "API key (optional)"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
+        container.addView(apiKey)
+        MaterialAlertDialogBuilder(ctx).setTitle("Google Search Settings").setView(android.widget.ScrollView(ctx).apply { addView(container) })
+            .setPositiveButton("Save") { _, _ -> GoogleSearchService.setEndpoint(ctx, endpoint.text.toString().trim()); GoogleSearchService.setApiKey(ctx, apiKey.text.toString().trim()); Toast.makeText(ctx, "Search settings saved.", Toast.LENGTH_SHORT).show() }
+            .setNegativeButton("Cancel", null).show()
     }
 
     private fun showLanguageDialog() {
