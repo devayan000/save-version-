@@ -100,6 +100,7 @@ class ScreenToolsService : Service() {
         val height = metrics.heightPixels
         val imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
         reader = imageReader
+        var blackFrames = 0
         mutableStatus.value = "Taking screenshot..."
         imageReader.setOnImageAvailableListener({ source ->
             if (finishing) return@setOnImageAvailableListener
@@ -112,6 +113,24 @@ class ScreenToolsService : Service() {
                     plane.buffer.rewind()
                     padded.copyPixelsFromBuffer(plane.buffer)
                     val bitmap = Bitmap.createBitmap(padded, 0, 0, width, height)
+                    // Black-frame guard: secure/protected content, a locked phone, or an
+                    // off screen mirrors as pure black. Detach + reattach the surface to
+                    // pull a fresh frame; give up with a clear reason after a few tries.
+                    if (isAllBlack(bitmap)) {
+                        bitmap.recycle()
+                        if (blackFrames >= 4) {
+                            fail(IllegalStateException("Screen is coming out black - the screen may be off, locked, or showing protected content."))
+                            return@setOnImageAvailableListener
+                        }
+                        blackFrames++
+                        display?.setSurface(null)
+                        handler.postDelayed({
+                            if (!finishing) {
+                                try { display?.setSurface(imageReader.surface) } catch (_: Exception) {}
+                            }
+                        }, 600)
+                        return@setOnImageAvailableListener
+                    }
                     try {
                         val file = File(cacheDir, "jarvis-screenshot-" + System.currentTimeMillis() + ".png")
                         temporary = file
@@ -151,6 +170,19 @@ class ScreenToolsService : Service() {
         } catch (e: Exception) { contentResolver.delete(uri, null, null); throw e }
         return directory + "/Jarvis/" + file.name
     }
+    // DEV STYLE: true when every sampled pixel is (near) pure black
+    private fun isAllBlack(bitmap: Bitmap): Boolean {
+        val stepX = maxOf(1, bitmap.width / 64)
+        val stepY = maxOf(1, bitmap.height / 48)
+        for (y in 0 until bitmap.height step stepY) {
+            for (x in 0 until bitmap.width step stepX) {
+                val p = bitmap.getPixel(x, y)
+                if ((p and 0x00FFFFFF) > 0x00010101) return false
+            }
+        }
+        return true
+    }
+
     private fun fail(error: Exception) {
         mutableStatus.value = "Capture failed: " + (error.message ?: "Try again.")
         Toast.makeText(this, mutableStatus.value, Toast.LENGTH_LONG).show()
