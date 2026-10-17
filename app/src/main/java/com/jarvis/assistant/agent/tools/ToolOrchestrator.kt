@@ -15,7 +15,11 @@ object ToolOrchestrator {
         Tool("github_research", "Search GitHub repositories and inspect README/license so the user can select one (Developer Agent stage 1)", false),
         Tool("run_shell", "Run a shell command in the Jarvis background terminal (Termux-style) and return its output", true),
         Tool("web_search", "Search the web in the background for fresh information and answer better", false),
-        Tool("photo_memory", "Remember a photo forever with its description, context and OCR text", false)
+        Tool("photo_memory", "Remember a photo forever with its description, context and OCR text", false),
+        Tool("send_email", "Send an email directly from Jarvis through the connected Gmail - no Gmail app or browser is opened", true),
+        Tool("read_email", "Read the latest emails directly inside Jarvis", false),
+        Tool("calendar_event", "Set a calendar event directly inside Jarvis without opening the Calendar app", true),
+        Tool("list_events", "List upcoming calendar events directly inside Jarvis", false)
     )
     fun availableTools(): List<Tool> = registry
     fun describe(input: String): String {
