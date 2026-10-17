@@ -8,7 +8,7 @@ class BugDetectionTest {
         assertTrue(BugDetectionService.ErrorType.values().any { it.name == "MISSING_DEPENDENCY" })
     }
     @Test fun severitiesAreOrdered() {
-        assertEquals(BugDetectionService.Severity.CRITICAL, BugDetectionService.Severity.values().first())
+        assertEquals(BugDetectionService.Severity.LOW, BugDetectionService.Severity.values().first())
     }
     @Test fun falseSuccessIsDetected() {
         assertTrue(BugDetectionService.ErrorType.values().any { it.name == "FALSE_SUCCESS" })

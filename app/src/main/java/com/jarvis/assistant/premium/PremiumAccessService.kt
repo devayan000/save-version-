@@ -99,7 +99,7 @@ object PremiumAccessService {
     fun whatsappKeyRequestUrl(): String {
         val stripped = WHATSAPP_NUMBER_LOCAL.removePrefix("0")
         val international = WHATSAPP_COUNTRY_CODE + stripped
-        val message = Uri.encode("Hello Ayan Sir! I would like to get a Jarvis AI Premium Access Key.")
+        val message = java.net.URLEncoder.encode("Hello Ayan Sir! I would like to get a Jarvis AI Premium Access Key.", "UTF-8").replace("+", "%20")
         return "https://wa.me/" + international + "?text=" + message
     }
 
