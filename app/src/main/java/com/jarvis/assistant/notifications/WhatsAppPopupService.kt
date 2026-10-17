@@ -23,6 +23,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.jarvis.assistant.automation.whatsapp.WhatsAppAutoReplyManager
 
 /**
  * DEV STYLE — WhatsApp message popup + voice reply.
@@ -51,6 +52,10 @@ class WhatsAppPopupService : NotificationListenerService() {
             if (sender.isBlank() || message.isBlank()) return
             if (sender.equals("WhatsApp", ignoreCase = true)) return
             val action = sbn.notification.actions?.firstOrNull { it.remoteInputs != null && it.remoteInputs.isNotEmpty() } ?: return
+
+            // DEV STYLE — Auto Reply module: rules-based silent reply, popup still available
+            runCatching { WhatsAppAutoReplyManager.get(applicationContext).handleNotification(sender, message, action) }
+
             handler.post { showPopup(sender, message, action) }
         } catch (e: Exception) {
             Log.e(TAG, "onNotificationPosted failed", e)
@@ -163,7 +168,7 @@ class WhatsAppPopupService : NotificationListenerService() {
             val intent = Intent()
             val results = Bundle()
             results.putCharSequence(remoteInputs[0].resultKey, replyText)
-            android.app.RemoteInput.addResultsToIntent(remoteInputs, intent, results)
+            RemoteInput.addResultsToIntent(remoteInputs, intent, results)
             action.actionIntent?.send(applicationContext, 0, intent)
             toast("Reply sent")
         } catch (e: Exception) {
