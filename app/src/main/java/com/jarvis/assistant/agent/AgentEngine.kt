@@ -40,6 +40,9 @@ object AgentEngine {
             return com.jarvis.assistant.agent.skills.SkillEvolutionLab.labReport()
         }
 
+        // DEV STYLE: "What's new" - Jarvis announces newly added features after every update.
+        if (isNewFeatureQuestion(request)) return whatsNewAnswer()
+
         // DEV STYLE: Jarvis never goes dark - offline answers come first.
         if (!com.jarvis.assistant.util.OfflineEngine.isOnline(context)) {
             com.jarvis.assistant.util.OfflineEngine.localAnswer(context, request)?.let { return it }
@@ -176,6 +179,10 @@ object AgentEngine {
 - Weather card on Home, live web search, screen share + visual tasks, multi-command sentences.
 - Premium: license activation unlocks unlimited sessions; free plan gives 30 minutes a day.
 When a request maps to a feature, explain in 1-2 short Hindi lines how it works and execute it.
+4. Pehle request ko samjho: kya karna hai, kaunsa feature use hoga, phir turant execute karo - confusion me atko mat.
+5. Jis kaam ke liye upar feature already hai, uske liye kabhi "main nahi kar sakta / pari na" mat bolo - seedha feature use karo.
+6. Agar request genuinely unclear ho, sirf EK chhota Hindi sawal pooch ke clarify karo, phir kaam complete karo.
+7. App update ke baad user "what's new / naya kya hai" pooche to latest update ke naye features confidently bata do (niche list diya hai).
 """.trimIndent()
 
     /** DEV STYLE: parses an incoming request into a shell command, or null when it is not one. */
@@ -194,6 +201,34 @@ When a request maps to a feature, explain in 1-2 short Hindi lines how it works 
         )
         return if (first in known) s else null
     }
+
+    /** DEV STYLE: features added in the latest updates - Jarvis announces these when asked. */
+    private val whatsNew = listOf(
+        "\uD83E\uDD16 2D animated avatar - Home screen pe ab orb ki jagah animated Jarvis face hai.",
+        "\u2709\uFE0F Gmail aur Calendar ab in-app chalte hain - external app khulta hi nahi.",
+        "\uD83D\uDCCE Chat me image/file attach karke Jarvis ko bhej sakte ho, wo process karta hai.",
+        "\uD83D\uDDA5\uFE0F Background terminal - sab shell/package commands chupchap chalte hain, koi UI nahi.",
+        "\uD83D\uDD24 Hindi-first Jarvis: ab har reply Hindi me aata hai.",
+        "\u2699\uFE0F Multi-command sentences: ek hi sentence me kai kaam ek ke baad ek ho jate hain.",
+        "\uD83D\uDD17 Google Workspace: Chat > Google Workspace se ek baar connect karo, phir Gmail/Calendar/Drive sab chalenge."
+    )
+
+    /** Detects "what's new / naya feature kya hai" style questions about app updates. */
+    private fun isNewFeatureQuestion(input: String): Boolean {
+        val lower = input.lowercase()
+        val triggers = listOf(
+            "what's new", "whats new", "what is new", "new feature", "new update",
+            "naya feature", "naye feature", "naya update", "kya naya", "kya update",
+            "\u0928\u092f\u093e \u092b\u093c\u0940\u091a\u0930", "\u0928\u092f\u093e \u0905\u092a\u0921\u0947\u091f"
+        )
+        return triggers.any { lower.contains(it) }
+    }
+
+    /** Hindi announcement of the latest added features. */
+    private fun whatsNewAnswer(): String =
+        "\uD83C\uDD95 \u0928\u092F\u093E \u0905\u092A\u0921\u0947\u091F \u0906 \u0917\u092F\u093E \u0939\u0948! \u092F\u0947 \u0928\u092E \u092B\u093C\u0940\u091A\u0930\u094D\u0938 \u0932\u093F\u0938\u094D\u091F \u0939\u0948:\n" +
+        whatsNew.joinToString("\n") { "\u2022 $it" } + "\n\n" +
+        "\u0915\u094B\u0908 \u092D\u0940 \u092B\u093C\u0940\u091A\u0930 \u0926\u094B\u0916\u093C \u0926\u094B \u0924\u094B \u092C\u0924\u093E\u092E\u0901, \u092E\u0948\u0902 \u0909\u0938\u0947 \u091A\u0932\u093E\u0928\u093E \u0938\u093F\u0916\u093E \u0926\u0942\u0902\u0917\u093E \u0938\u0930\u0964"
 
     private fun replyIndicatesInability(userInput: String, reply: String): Boolean {
         if (userInput.isBlank()) return false
