@@ -147,6 +147,9 @@ dependencies {
     // Security Crypto for EncryptedSharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
+    // Google Play services - AuthorizationClient (Identity) for Gmail/Calendar/Drive access
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
+
     testImplementation("junit:junit:4.13.2")
 }
 
