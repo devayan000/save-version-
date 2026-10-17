@@ -102,7 +102,7 @@ object AgentEngine {
 
         // Auto-save bugs: when the user asks for something and Jarvis replies it cannot
         // do it, record the failure so the creator can review it later.
-        if (replyIndicatesInability(userInput, reply)) {
+        if (replyIndicatesInability(request, reply)) {
             BugDetectionService.report(
                 ctx = context,
                 feature = "Task Fulfillment",
