@@ -1,6 +1,5 @@
 package com.jarvis.assistant.google
 
-import android.accounts.Account
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -10,7 +9,6 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.RevocationRequest
 import com.google.android.gms.common.api.Scope
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -56,7 +54,7 @@ class GoogleWorkspacePreferences(context: Context) {
         set(value) { check(edit { it.putString(KEY_EMAIL, value.trim()) }) { "Could not save the Google account." } }
 
     var connectedAtMs: Long
-        get() = securePrefs.getLong(KEY_CONNECTED_AT, 0L)
+        get() = securePrefs?.getLong(KEY_CONNECTED_AT, 0L) ?: 0L
         set(value) { check(edit { it.putLong(KEY_CONNECTED_AT, value) }) { "Could not save the connection time." } }
 
     fun clear() {
@@ -220,6 +218,7 @@ object GoogleWorkspaceManager {
         }, { error -> onDone(label + ": FAILED - " + error) })
     }
 
+    /** Disconnect: clear local status, then revoke the grants at Google via the OAuth revoke endpoint. */
     fun disconnect(context: Context, onDone: (String) -> Unit) {
         val prefs = preferences(context)
         val email = prefs.accountEmail
@@ -228,12 +227,31 @@ object GoogleWorkspaceManager {
             onDone("Disconnected.")
             return
         }
-        Identity.getAuthorizationClient(context)
-            .revokeAccess(RevocationRequest.Builder().setAccount(Account(email, "com.google")).build())
-            .addOnSuccessListener { onDone("Disconnected. Google access revoked.") }
-            .addOnFailureListener { e ->
-                onDone("Disconnected locally. Revoke was not confirmed (" + (e.message ?: "error") + ") - remove Jarvis from myaccount.google.com/permissions if needed.")
+        requestAuthorization(
+            context,
+            { token ->
+                executor.submit {
+                    try {
+                        val form = okhttp3.FormBody.Builder().add("token", token).build()
+                        val revoked = http.newCall(
+                            Request.Builder().url("https://oauth2.googleapis.com/revoke").post(form).build()
+                        ).execute().use { it.isSuccessful }
+                        main.post {
+                            onDone(if (revoked) "Disconnected. Google access revoked." else "Disconnected. Google revoke not confirmed - check myaccount.google.com/permissions.")
+                        }
+                    } catch (e: Exception) {
+                        main.post { onDone("Disconnected locally. Google revoke not confirmed (" + (e.message ?: "error") + ").") }
+                    }
+                }
+            },
+            { sender ->
+                // Grants are already gone: a silent token is no longer returned.
+                onDone("Disconnected.")
+            },
+            { error ->
+                onDone("Disconnected locally. Google revoke not confirmed.")
             }
+        )
     }
 
     private fun humanBytes(value: Long): String {
