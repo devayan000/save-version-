@@ -162,7 +162,7 @@ class HomeFragment : Fragment() {
                 allowFileAccessFromFileURLs = true
                 @Suppress("DEPRECATION")
                 allowUniversalAccessFromFileURLs = true
-                cacheMode = WebSettings.LOAD_DEFAULT
+                cacheMode = WebSettings.LOAD_NO_CACHE
             }
 
             webViewClient = object : WebViewClient() {

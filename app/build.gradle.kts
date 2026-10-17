@@ -14,8 +14,8 @@ val releaseStorePassword = configuredValue("JARVIS_RELEASE_STORE_PASSWORD")
 val releaseKeyAlias = configuredValue("JARVIS_RELEASE_KEY_ALIAS")
 val releaseKeyPassword = configuredValue("JARVIS_RELEASE_KEY_PASSWORD")
 val releaseCertSha256 = configuredValue("JARVIS_RELEASE_CERT_SHA256")?.replace(":", "")?.uppercase().orEmpty()
-val developerName = configuredValue("JARVIS_DEVELOPER_NAME")?.ifBlank { null } ?: "Dev Ayan"
-val copyrightOwner = configuredValue("JARVIS_COPYRIGHT_OWNER")?.ifBlank { null } ?: "Dev Ayan"
+val developerName = configuredValue("JARVIS_DEVELOPER_NAME")?.ifBlank { null } ?: "Ayan Ahamed"
+val copyrightOwner = configuredValue("JARVIS_COPYRIGHT_OWNER")?.ifBlank { null } ?: "Ayan Ahamed"
 val verificationEndpoint = configuredValue("JARVIS_VERIFICATION_ENDPOINT").orEmpty()
 val releaseSigningReady = listOf(releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
 
@@ -27,8 +27,8 @@ android {
         applicationId = "com.jarvis.assistant"
         minSdk = 26
         targetSdk = 34
-        versionCode = 144
-        versionName = "1.9.0"
+        versionCode = 145
+        versionName = "1.9.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "DEVELOPER_NAME", buildConfigString(developerName.ifBlank { "Unverified developer" }))
@@ -49,6 +49,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Never use a newly generated debug keystore for installable APKs.
+            signingConfig = signingConfigs.getByName("release")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -95,7 +99,7 @@ tasks.register("verifyReleaseSecurityInputs") {
     }
 }
 
-tasks.matching { it.name == "packageRelease" }.configureEach {
+tasks.matching { it.name == "packageRelease" || it.name == "packageDebug" }.configureEach {
     dependsOn("verifyReleaseSecurityInputs")
 }
 

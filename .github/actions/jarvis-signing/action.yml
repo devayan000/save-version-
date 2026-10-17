@@ -1,0 +1,53 @@
+name: Restore permanent Jarvis signing identity
+description: Reuses the publisher keystore and rejects missing or mismatched certificates. Never creates a key.
+inputs:
+  keystore-base64:
+    required: true
+    description: Base64 of the ORIGINAL keystore, not a newly generated one
+  store-password:
+    required: true
+    description: Original keystore password
+  key-alias:
+    required: true
+    description: Original signing alias
+  key-password:
+    required: true
+    description: Original key password
+  certificate-sha256:
+    required: true
+    description: Original certificate SHA-256 fingerprint
+runs:
+  using: composite
+  steps:
+    - name: Verify and restore the existing key
+      shell: bash
+      env:
+        KEYSTORE_BASE64: ${{ inputs.keystore-base64 }}
+        JARVIS_RELEASE_STORE_PASSWORD: ${{ inputs.store-password }}
+        JARVIS_RELEASE_KEY_ALIAS: ${{ inputs.key-alias }}
+        JARVIS_RELEASE_KEY_PASSWORD: ${{ inputs.key-password }}
+        JARVIS_RELEASE_CERT_SHA256: ${{ inputs.certificate-sha256 }}
+      run: |
+        set -euo pipefail
+        for name in KEYSTORE_BASE64 JARVIS_RELEASE_STORE_PASSWORD JARVIS_RELEASE_KEY_ALIAS JARVIS_RELEASE_KEY_PASSWORD JARVIS_RELEASE_CERT_SHA256; do
+          if [[ -z "${!name}" ]]; then
+            echo "::error::Configure the ORIGINAL signing keystore and all five JARVIS_RELEASE secrets. No replacement key will be generated."
+            exit 1
+          fi
+          if [[ "${!name}" == *$'\n'* || "${!name}" == *$'\r'* ]]; then
+            echo "::error::Signing values must be single-line values."
+            exit 1
+          fi
+        done
+        KEYSTORE_PATH="$RUNNER_TEMP/jarvis-permanent.jks"
+        umask 077
+        printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+        EXPECTED=$(printf '%s' "$JARVIS_RELEASE_CERT_SHA256" | tr -d ':' | tr '[:lower:]' '[:upper:]')
+        [[ "$EXPECTED" =~ ^[A-F0-9]{64}$ ]] || { echo "::error::Invalid certificate fingerprint"; exit 1; }
+        ACTUAL=$(keytool -exportcert -keystore "$KEYSTORE_PATH" -alias "$JARVIS_RELEASE_KEY_ALIAS" -storepass:env JARVIS_RELEASE_STORE_PASSWORD | sha256sum | cut -d ' ' -f 1 | tr '[:lower:]' '[:upper:]')
+        [[ "$ACTUAL" == "$EXPECTED" ]] || { echo "::error::Signing certificate changed. Refusing to build an incompatible update."; exit 1; }
+        printf 'JARVIS_RELEASE_STORE_FILE=%s\n' "$KEYSTORE_PATH" >> "$GITHUB_ENV"
+        printf 'JARVIS_RELEASE_STORE_PASSWORD=%s\n' "$JARVIS_RELEASE_STORE_PASSWORD" >> "$GITHUB_ENV"
+        printf 'JARVIS_RELEASE_KEY_ALIAS=%s\n' "$JARVIS_RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+        printf 'JARVIS_RELEASE_KEY_PASSWORD=%s\n' "$JARVIS_RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+        printf 'JARVIS_RELEASE_CERT_SHA256=%s\n' "$EXPECTED" >> "$GITHUB_ENV"

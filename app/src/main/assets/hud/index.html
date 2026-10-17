@@ -126,6 +126,15 @@
   .center-mic-btn svg { width: 26px; height: 26px; fill: currentColor; }
   #hud[data-state="listening"] .center-mic-btn { box-shadow: 0 0 24px rgba(63,182,224,.6), 0 6px 20px rgba(63,182,224,.4); }
   #hud[data-state="speaking"] .center-mic-btn { box-shadow: 0 0 24px rgba(245,158,11,.6), 0 6px 20px rgba(245,158,11,.4); }
+  .reactor-housing::before { content: ''; position: absolute; inset: 17%; border-radius: 44% 56% 61% 39%; background: radial-gradient(circle at 30% 25%, #ffffff, #d9f99d 36%, #84cc16 72%, #3f6212); box-shadow: inset 0 3px 14px #ffffff, 0 15px 48px #84cc1644; animation: liquidMorph 5s ease-in-out infinite alternate; }
+  .reactor-housing.rendered::before { display: none; }
+  #blob-canvas { position: relative; z-index: 1; touch-action: none; }
+  @keyframes liquidMorph { to { border-radius: 61% 39% 44% 56%; transform: rotate(16deg) scale(1.06); } }
+  body.embedded, body.embedded #hud { background: transparent; padding: 0; }
+  body.embedded .header-bar, body.embedded footer, body.embedded .orb-caption { display: none; }
+  body.embedded .orb-center-stage { width: 100%; height: 100%; min-height: 0; }
+  body.embedded .reactor-housing { width: min(100vw, 100vh); height: min(100vw, 100vh); max-width: 100%; max-height: 100%; }
+  @media (max-width: 420px) { .header-bar { padding: 10px; gap: 6px; } .live-clock { display: none; } .dock-btn { padding: 8px 9px; } }
 </style>
 </head>
 <body>
@@ -283,13 +292,16 @@ void main(){
   };
 
   var scene, camera, renderer, blob, uniforms;
+  var rotationX = 0, rotationY = 0;
   function initBlob(){
     var canvas = document.getElementById('blob-canvas');
     if (typeof THREE === 'undefined') return;
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     camera.position.z = 6;
-    renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
+    try { renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true}); }
+    catch (error) { console.warn('WebGL unavailable; showing the animated glass orb.', error); return; }
+    reactorAssembly.classList.add('rendered');
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     uniforms = {
       u_time: {value: 0}, u_progress: {value: 1.0}, u_amp: {value: 0.22},
@@ -322,7 +334,7 @@ void main(){
     var t = (performance.now() - t0) / 1000;
     uniforms.u_time.value = t;
     uniforms.u_progress.value = 1.0 + 0.15 * Math.sin(t * 0.8);
-    if (blob){ blob.rotation.x = t * 0.05; blob.rotation.y = t * 0.08; }
+    if (blob){ blob.rotation.x = t * 0.05 + rotationX; blob.rotation.y = t * 0.08 + rotationY; }
     if (renderer) renderer.render(scene, camera);
   }
   window.addEventListener('resize', resizeBlob);
@@ -386,6 +398,32 @@ void main(){
     else { btnVision.classList.remove('btn-active'); labelVision.textContent = 'Vision'; labelVision.style.color = 'var(--ink-soft)'; }
   };
   window.updateScreenShareState = window.setScreenShareState;
+  // HomeFragment uses this contract, not OrbHelper. Both native entry points share the same orb.
+  window.JarvisOrb = {
+    setState: window.setOrbState,
+    setExternalAudio: function(amp, bass, high){ window.setAudioLevel(Math.max(amp || 0, bass || 0, high || 0)); },
+    setTheme: function(theme){
+      var palettes = {light: [[0.90,0.95,0.80],[0.65,0.80,0.30],[0.40,0.60,0.10]], dark: [[0.72,0.95,1.0],[0.34,0.69,0.85],[0.31,0.43,0.75]], red: [[1.0,0.85,0.87],[0.95,0.38,0.45],[0.67,0.16,0.26]], sunset: [[1.0,0.90,0.75],[1.0,0.65,0.42],[0.80,0.35,0.50]]};
+      var colors = palettes[theme] || palettes.light;
+      STATES.idle.cA = colors[0]; STATES.idle.cB = colors[1]; STATES.idle.cC = colors[2];
+      if (currentState === 'idle') applyState('idle', 0);
+    },
+    setBackground: function(hex){
+      if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
+      var color = parseInt(hex.slice(1), 16), rgb = [(color >> 16 & 255) / 255, (color >> 8 & 255) / 255, (color & 255) / 255];
+      STATES.idle.cA = rgb.map(function(value){ return value * 0.3 + 0.7; }); STATES.idle.cB = rgb; STATES.idle.cC = rgb.map(function(value){ return value * 0.6; });
+      if (currentState === 'idle') applyState('idle', 0);
+    },
+    startListening: function(){ window.setOrbState('listening'); },
+    startThinking: function(){ window.setOrbState('thinking'); },
+    startSpeaking: function(){ window.setOrbState('speaking'); },
+    stopSpeaking: function(){ window.setOrbState('idle'); }
+  };
+  var pointerX = 0, pointerY = 0, dragging = false;
+  reactorAssembly.addEventListener('pointerdown', function(event){ dragging = true; pointerX = event.clientX; pointerY = event.clientY; });
+  reactorAssembly.addEventListener('pointermove', function(event){ if (dragging && blob) { rotationY += (event.clientX - pointerX) * 0.01; rotationX += (event.clientY - pointerY) * 0.01; pointerX = event.clientX; pointerY = event.clientY; } });
+  window.addEventListener('pointerup', function(){ dragging = false; });
+  window.addEventListener('pointercancel', function(){ dragging = false; });
   window.updateLiveUserTranscript = function(){};
   window.updateLiveAssistantResponse = function(){};
   window.finalizeLiveTurn = function(){};

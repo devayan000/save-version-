@@ -280,10 +280,34 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showWakeWordDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Wake Words & Sensitivity")
-            .setMessage("• Wake Words: 'Jarvis', 'Hey Jarvis'\n• Acoustic Trigger: Double Clap detection\n• Standby Mode: Low-power local Vosk offline engine\n\nWhen standby listening is active, Jarvis awakens instantly upon hearing your voice.")
-            .setPositiveButton("Got It", null)
+        val ctx = requireContext()
+        preferences.clearLegacyUnlockCredential()
+        val container = android.widget.LinearLayout(ctx).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(48, 32, 48, 16)
+        }
+        android.widget.TextView(ctx).apply {
+            text = "• Wake Words: 'Jarvis', 'Hey Jarvis'\n• Acoustic Trigger: Double Clap detection\n• Standby Mode: Low-power local Vosk offline engine\n\nWhen standby listening is active, Jarvis awakens instantly upon hearing your voice.\n\nSave your creator greeting phrase below. This personalizes greetings only; it is not voice authentication and grants no extra permissions. Saying 'unlock phone' offers Android's unlock screen; PIN, password or biometrics are still required for a secure lock."
+            setPadding(0, 0, 0, 24)
+            container.addView(this)
+        }
+        val phrase = android.widget.EditText(ctx).apply { hint = "Creator greeting phrase (e.g. AHONA-I-LOVE-YOU)"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD; setText(preferences.creatorSecretPhrase) }
+        val name = android.widget.EditText(ctx).apply { hint = "Creator name (e.g. Ayan Sir)"; inputType = android.text.InputType.TYPE_CLASS_TEXT; setText(preferences.creatorName) }
+        val email = android.widget.EditText(ctx).apply { hint = "Creator email (optional)"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS; setText(preferences.creatorEmail) }
+        for (et in listOf(phrase, name, email)) {
+            (et.layoutParams as? android.widget.LinearLayout.LayoutParams)?.setMargins(0, 12, 0, 12)
+            container.addView(et)
+        }
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle("Wake Words & Creator Greeting")
+            .setView(android.widget.ScrollView(ctx).apply { addView(container) })
+            .setPositiveButton("Save") { _, _ ->
+                preferences.creatorSecretPhrase = phrase.text.toString().trim()
+                preferences.creatorName = name.text.toString().trim()
+                preferences.creatorEmail = email.text.toString().trim()
+                Toast.makeText(ctx, "Creator greeting saved. Android handles phone authentication; no phone PIN is stored.", Toast.LENGTH_LONG).show()
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

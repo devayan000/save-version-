@@ -33,6 +33,11 @@
 
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
+    <queries>
+        <intent><action android:name="android.speech.RecognitionService" /></intent>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
+    </queries>
+
     <application
         android:name=".JarvisApp"
         android:allowBackup="false"
@@ -117,6 +122,10 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
+
+        <activity android:name=".security.UnlockActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" />
+        <activity android:name=".vision.ScreenToolsActivity" android:exported="false" />
+        <service android:name=".vision.ScreenToolsService" android:exported="false" android:foregroundServiceType="mediaProjection" />
 
         <service
             android:name=".background.JarvisConversationService"

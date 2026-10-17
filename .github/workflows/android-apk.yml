@@ -39,6 +39,18 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
+      - name: Compile and test native changes
+        run: ./gradlew :app:compileDebugKotlin :app:processDebugResources :app:testDebugUnitTest --stacktrace
+
+      - name: Restore the permanent signing key
+        uses: ./.github/actions/jarvis-signing
+        with:
+          keystore-base64: ${{ secrets.JARVIS_RELEASE_KEYSTORE_BASE64 }}
+          store-password: ${{ secrets.JARVIS_RELEASE_STORE_PASSWORD }}
+          key-alias: ${{ secrets.JARVIS_RELEASE_KEY_ALIAS }}
+          key-password: ${{ secrets.JARVIS_RELEASE_KEY_PASSWORD }}
+          certificate-sha256: ${{ secrets.JARVIS_RELEASE_CERT_SHA256 }}
+
       - name: Build debug APK with the Gradle wrapper (:app assembleDebug)
         run: ./gradlew :app:assembleDebug --stacktrace --warning-mode all
 

@@ -306,6 +306,13 @@ class AppPreferences(context: Context) {
             prefs.edit().putString(KEY_USER_NAME, value.trim()).commit()
         }
 
+    // Activate the requested redesign once; later theme choices remain user-controlled.
+    fun activateLiquidGlassUi() {
+        if (!prefs.getBoolean("liquid_glass_ui_v2", false)) {
+            prefs.edit().putString(KEY_APP_THEME, "light").putBoolean("liquid_glass_ui_v2", true).commit()
+        }
+    }
+
     var appTheme: String
         get() {
             val stored = prefs.getString(KEY_APP_THEME, "sunset") ?: "sunset"
