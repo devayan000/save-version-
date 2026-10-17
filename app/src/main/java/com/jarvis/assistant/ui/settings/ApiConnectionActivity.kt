@@ -140,6 +140,19 @@ class ApiConnectionActivity : AppCompatActivity() {
             startActivity(android.content.Intent(this, com.jarvis.assistant.developer.GitHubResearchActivity::class.java))
         }
         (binding.btnImgbbKey.parent as? android.view.ViewGroup)?.addView(researchBtn)
+
+        // Terminal launcher (Termux-style shell, runs in background)
+        val terminalBtn = com.google.android.material.button.MaterialButton(this)
+        terminalBtn.text = "Terminal (Run Shell Commands)"
+        terminalBtn.isAllCaps = false
+        terminalBtn.layoutParams = android.widget.LinearLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            (40 * resources.displayMetrics.density).toInt()
+        ).apply { topMargin = (12 * resources.displayMetrics.density).toInt() }
+        terminalBtn.setOnClickListener {
+            startActivity(android.content.Intent(this, com.jarvis.assistant.terminal.TerminalActivity::class.java))
+        }
+        (binding.btnImgbbKey.parent as? android.view.ViewGroup)?.addView(terminalBtn)
     }
 
     private fun updateImgbbStatus() {
