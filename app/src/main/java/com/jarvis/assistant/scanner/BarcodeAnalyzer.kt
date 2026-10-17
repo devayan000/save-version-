@@ -16,7 +16,7 @@ class BarcodeAnalyzer(private val onBarcode: (Barcode) -> Unit) : ImageAnalysis.
             Barcode.FORMAT_QR_CODE,
             Barcode.FORMAT_AZTEC,
             Barcode.FORMAT_DATA_MATRIX,
-            Barcode.FORMAT_PDF_417,
+            Barcode.FORMAT_PDF417,
             Barcode.FORMAT_EAN_13,
             Barcode.FORMAT_EAN_8,
             Barcode.FORMAT_UPC_A,

@@ -13,8 +13,8 @@ object NotificationBriefingBuilder {
 
     data class NotificationItem(
         val packageName: String,
-        val title: String,
-        val text: String,
+        var title: String,
+        var text: String,
         val category: Category,
         val notificationId: Int,
         val postTime: Long,
