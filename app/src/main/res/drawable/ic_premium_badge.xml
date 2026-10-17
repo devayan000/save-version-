@@ -1,10 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="28dp"
+    android:height="28dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- Crown body with a polished gold gradient -->
+    <path android:pathData="M3.4,17.6 L2.2,7.4 C2.16,7.02 2.58,6.79 2.88,7.01 L7.62,10.52 L11.42,4.72 C11.61,4.43 12.03,4.43 12.22,4.72 L16.02,10.52 L20.76,7.01 C21.06,6.79 21.48,7.02 21.44,7.4 L20.24,17.6 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="2.2"
+                android:startY="6"
+                android:endX="21.5"
+                android:endY="18">
+                <item android:offset="0" android:color="#FFEDB8"/>
+                <item android:offset="0.45" android:color="#F5B301"/>
+                <item android:offset="1" android:color="#C77F02"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Base bar -->
     <path
-        android:fillColor="#F5B301"
-        android:pathData="M2,20h20v2H2zM5,18L3,6l5.5,4L12,3l3.5,7L21,6l-2,12H5z" />
+        android:fillColor="#B36F02"
+        android:pathData="M4.6,18.8 h14.8 a1.2,1.2 0 0 1 1.2,1.2 v0 a1.2,1.2 0 0 1 -1.2,1.2 h-14.8 a1.2,1.2 0 0 1 -1.2,-1.2 v0 a1.2,1.2 0 0 1 1.2,-1.2 z" />
+    <!-- Center gem -->
+    <path
+        android:fillColor="#FFF6D8"
+        android:pathData="M11.85,10.6 l1.75,2.2 -1.75,2.6 -1.75,-2.6 z" />
+    <!-- Sparkles -->
+    <path
+        android:fillColor="#FFE082"
+        android:pathData="M19.6,2.2 l0.55,1.45 1.45,0.55 -1.45,0.55 -0.55,1.45 -0.55,-1.45 -1.45,-0.55 1.45,-0.55 z" />
+    <path
+        android:fillColor="#FFE082"
+        android:pathData="M4.4,3.4 l0.4,1.05 1.05,0.4 -1.05,0.4 -0.4,1.05 -0.4,-1.05 -1.05,-0.4 1.05,-0.4 z" />
 </vector>
