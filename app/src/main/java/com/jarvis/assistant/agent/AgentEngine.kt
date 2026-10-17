@@ -10,7 +10,11 @@ import com.jarvis.assistant.agent.permissions.PermissionGate
 import com.jarvis.assistant.agent.recovery.ErrorRecovery
 import com.jarvis.assistant.agent.tools.ToolOrchestrator
 import com.jarvis.assistant.agent.verification.ResultVerifier
+import com.jarvis.assistant.bugs.BugDetectionService
 import com.jarvis.assistant.network.HttpChatClient
+import com.jarvis.assistant.tools.GoogleSearchService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Main orchestrator. Enhances prompts with emotional intelligence, memory, personality, planning, personas, and tool awareness. Wraps the existing HttpChatClient behind a feature flag. */
 object AgentEngine {
@@ -47,6 +51,12 @@ object AgentEngine {
         if (FeatureFlags.isEnabled(FeatureFlags.toolOrchestration)) {
             val tools = ToolOrchestrator.describe(userInput)
             if (tools.isNotBlank()) sb.insert(0, tools)
+            // Background web search: for questions or explicit search requests, fetch live
+            // web results first so the answer is grounded in fresh, real information.
+            if (looksLikeSearchNeed(userInput)) {
+                val searchBlock = withContext(Dispatchers.IO) { buildSearchContext(context, userInput) }
+                if (searchBlock.isNotBlank()) sb.insert(0, searchBlock)
+            }
         }
         if (FeatureFlags.isEnabled(FeatureFlags.permissionGating)) {
             val gate = PermissionGate.check(userInput)
@@ -59,6 +69,23 @@ object AgentEngine {
             ErrorRecovery.execute { HttpChatClient().ask(endpoint, enhancedPrompt, apiKey, model) }
         else HttpChatClient().ask(endpoint, enhancedPrompt, apiKey, model)
 
+        // Auto-save bugs: when the user asks for something and Jarvis replies it cannot
+        // do it, record the failure so the creator can review it later.
+        if (replyIndicatesInability(userInput, reply)) {
+            BugDetectionService.report(
+                ctx = context,
+                feature = "Task Fulfillment",
+                command = userInput.take(200),
+                expected = "Complete the task the user asked for",
+                actual = "Jarvis replied it could not do it: " + reply.take(200),
+                errorType = BugDetectionService.ErrorType.UNKNOWN,
+                errorMessage = "Assistant reported inability for request: " + userInput.take(150),
+                rootCause = "Requested capability is missing, blocked, or lacks permission/context",
+                suggestedFix = "Review the request, add or fix the missing capability, then re-test",
+                severity = BugDetectionService.Severity.MEDIUM
+            )
+        }
+
         if (FeatureFlags.isEnabled(FeatureFlags.resultVerification)) {
             val verification = ResultVerifier.verify(userInput, reply)
             if (!verification.passed) {
@@ -68,5 +95,32 @@ object AgentEngine {
             }
         }
         return reply
+    }
+
+    private fun buildSearchContext(context: Context, userInput: String): String {
+        return try {
+            val search = GoogleSearchService.searchWithFallback(context, userInput)
+            if (search.success && search.results.isNotBlank())
+                "LIVE WEB RESULTS for \"" + userInput.take(120) + "\":\n" + search.results.take(4000) +
+                    "\nUse these live results for an accurate, up-to-date answer.\n"
+            else ""
+        } catch (_: Exception) { "" }
+    }
+
+    private fun looksLikeSearchNeed(input: String): Boolean {
+        val lower = input.lowercase().trim()
+        if (lower.length < 4) return false
+        val explicit = listOf("search", "google", "look up", "find out", "latest", "news", "current", "price of", "weather", "today", "who is", "what is")
+        if (explicit.any { lower.contains(it) }) return true
+        if (lower.endsWith("?")) return true
+        val starters = listOf("what ", "who ", "when ", "where ", "why ", "how ", "which ", "ki ", "kivabe", "kothay", "keno", "kemon")
+        return starters.any { lower.startsWith(it) }
+    }
+
+    private fun replyIndicatesInability(userInput: String, reply: String): Boolean {
+        if (userInput.isBlank()) return false
+        val lower = reply.lowercase()
+        val phrases = listOf("i can't", "i cannot", "i'm unable", "i am unable", "unable to", "not able to", "can't do", "cannot do", "not possible for me", "pari na", "parbo na", "korte parbo na", "korte parbo")
+        return phrases.any { lower.contains(it) }
     }
 }
