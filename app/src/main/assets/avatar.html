@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  .stage { position: relative; width: min(74vw, 320px); aspect-ratio: 1 / 1.25; }
+  .glow {
+    position: absolute; left: 50%; top: 55%; width: 130%; height: 90%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, var(--glow, rgba(101,163,13,.55)), transparent 72%);
+    filter: blur(6px); opacity: .55; transition: opacity .6s ease;
+  }
+  .layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .face { transition: opacity .12s ease; }
+  .face.hidden { opacity: 0; }
+  #backhair, #fronthair, #ribbons { pointer-events: none; }
+  #fronthair { z-index: 3; }
+  #ribbons { z-index: 4; }
+  .face { z-index: 2; }
+  #backhair { z-index: 1; }
+  .rig { position: absolute; inset: 0; transform-origin: 50% 90%; }
+  .rig.awake { animation: breathe 4.2s ease-in-out infinite; }
+  .rig.speaking { animation: talk-bob .42s ease-in-out infinite; }
+  .rig.thinking { animation: tilt 2.6s ease-in-out infinite; }
+  .rig.sleep { animation: breathe 7s ease-in-out infinite; filter: brightness(.62) saturate(.8); }
+  .rig.listening { animation: breathe 3s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-2.2%) } }
+  @keyframes talk-bob { 0%,100% { transform: translateY(0) rotate(0deg) } 50% { transform: translateY(-1.4%) rotate(-.6deg) } }
+  @keyframes tilt { 0%,100% { transform: rotate(0deg) } 40% { transform: rotate(2.4deg) } 70% { transform: rotate(-1.6deg) } }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="glow" id="glow"></div>
+    <div class="rig" id="rig">
+      <img class="layer" id="backhair"  src="hud/avatar/back-hair.png" alt="">
+      <img class="layer face" id="f_closed" src="hud/avatar/eyes-closed-mouth-closed.png" alt="">
+      <img class="layer face hidden" id="f_closed2" src="hud/avatar/eyes-open-mouth-closed.png" alt="">
+      <img class="layer face hidden" id="f_half"    src="hud/avatar/eyes-open-mouth-half.png" alt="">
+      <img class="layer face hidden" id="f_open"    src="hud/avatar/eyes-open-mouth-open.png" alt="">
+      <img class="layer" id="fronthair" src="hud/avatar/front-hair.png" alt="">
+      <img class="layer" id="ribbons"   src="hud/avatar/red-tassel-ribbons.png" alt="">
+    </div>
+  </div>
+<script>
+  const rig = document.getElementById('rig');
+  const glow = document.getElementById('glow');
+  const faces = { closed: 'f_closed', calm: 'f_closed2', half: 'f_half', open: 'f_open' };
+  let state = 'idle';
+  let blinkTimer = null;
+  let talkTimer = null;
+  let visible = 'calm';
+  let audio = 0;
+
+  function showFace(key) {
+    if (visible === key) return;
+    for (const k in faces) document.getElementById(faces[k]).classList.toggle('hidden', k !== key);
+    visible = key;
+  }
+
+  function stopTalk() { if (talkTimer) { clearInterval(talkTimer); talkTimer = null; } }
+  function stopBlink() { if (blinkTimer) { clearTimeout(blinkTimer); blinkTimer = null; } }
+
+  function scheduleBlink() {
+    stopBlink();
+    if (state === 'speaking') return;
+    blinkTimer = setTimeout(() => {
+      const prev = visible;
+      showFace('closed');
+      setTimeout(() => { if (state !== 'speaking') showFace(state === 'sleep' ? 'closed' : 'calm'); }, 130);
+      scheduleBlink();
+    }, 2600 + Math.random() * 2600);
+  }
+
+  function applyState(next) {
+    state = next;
+    rig.classList.remove('awake', 'speaking', 'thinking', 'sleep', 'listening');
+    rig.classList.add(state === 'idle' ? 'awake' : state);
+    stopTalk();
+    if (state === 'speaking') {
+      const cycle = ['open', 'half', 'closed', 'half'];
+      let i = 0;
+      showFace('open');
+      talkTimer = setInterval(() => { showFace(cycle[i++ % cycle.length]); }, 150);
+    } else if (state === 'sleep') {
+      showFace('closed');
+      glow.style.opacity = '.18';
+    } else {
+      showFace('calm');
+      scheduleBlink();
+      glow.style.opacity = state === 'listening' ? '.85' : '.55';
+    }
+  }
+
+  function setGlowColor(c) { glow.style.background = 'radial-gradient(closest-side, ' + c + ', transparent 72%)'; }
+
+  window.JarvisOrb = {
+    setState(next) { applyState(next); },
+    setTheme(key) {
+      const map = {
+        dark: 'rgba(91,140,255,.55)', red: 'rgba(255,77,94,.5)',
+        sunset: 'rgba(255,106,61,.5)', light: 'rgba(101,163,13,.55)'
+      };
+      setGlowColor(map[key] || map.light);
+      glow.style.opacity = state === 'sleep' ? '.18' : (state === 'listening' ? '.85' : '.55');
+    },
+    setBackground(hex) { setGlowColor(hex); },
+    setExternalAudio(amp, bass, high) {
+      const a = Math.min(1, Math.max(0, amp || 0));
+      if (Math.abs(a - audio) < .04) return;
+      audio = a;
+      if (state !== 'sleep') glow.style.opacity = String(.4 + a * .5);
+      rig.style.scale = String(1 + a * .03);
+    }
+  };
+
+  applyState('idle');
+  const params = new URLSearchParams(location.search);
+  if (params.get('embedded') !== '1') setGlowColor('rgba(101,163,13,.55)');
+</script>
+</body>
+</html>
