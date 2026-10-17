@@ -31,13 +31,15 @@ class DebateEngine(private val context: Context) {
             put("isIndependent", isIndependent); put("createdDate", createdDate)
         }
         companion object {
+            private fun stringList(o: JSONObject, key: String): List<String> {
+                val arr = o.optJSONArray(key) ?: return emptyList()
+                return (0 until arr.length()).map { arr.optString(it, "") }
+            }
             fun fromJson(o: JSONObject) = DebateSession(
                 o.getString("id"), o.getString("topic"),
                 o.optString("proposerResponse", ""), o.optString("criticResponse", ""),
                 o.optString("reviewerResponse", ""), o.optString("summary", ""),
-                (0 until o.optJSONArray("agreements").length()).map { it.toString() },
-                (0 until o.optJSONArray("disagreements").length()).map { it.toString() },
-                (0 until o.optJSONArray("unresolvedQuestions").length()).map { it.toString() },
+                stringList(o, "agreements"), stringList(o, "disagreements"), stringList(o, "unresolvedQuestions"),
                 o.optBoolean("isIndependent", false), o.optString("createdDate", "")
             )
         }
