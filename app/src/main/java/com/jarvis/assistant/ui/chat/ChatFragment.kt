@@ -74,6 +74,43 @@ class ChatFragment : Fragment() {
         out.toByteArray()
     }.getOrNull()
 
+    // DEV STYLE: chat file attachment — any file type can be sent to Jarvis, not just images.
+    private val filePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@registerForActivityResult
+        sendFileToJarvis(uri)
+    }
+
+    private fun sendFileToJarvis(uri: Uri) {
+        val ctx = requireContext()
+        val resolver = ctx.contentResolver
+        val meta = runCatching {
+            resolver.query(uri, null, null, null, null)?.use { c ->
+                val nameIdx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                val sizeIdx = c.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                val n = if (c.moveToFirst() && nameIdx >= 0) c.getString(nameIdx) else null
+                val s = if (c.moveToFirst() && sizeIdx >= 0) c.getLong(sizeIdx) else -1L
+                n to s
+            }
+        }.getOrNull() ?: (null to -1L)
+        val name = meta.first ?: "file"
+        val sizeBytes = meta.second
+        val sizeText = if (sizeBytes > 0) String.format(java.util.Locale.US, "%.1f KB", sizeBytes / 1024.0) else "unknown size"
+        val textExt = setOf("txt", "md", "json", "csv", "xml", "html", "css", "js", "kt", "java", "py", "log", "yml", "yaml", "ini", "sh", "ts", "gradle", "properties")
+        val ext = name.substringAfterLast('.', "").lowercase()
+        val mime = resolver.getType(uri) ?: ""
+        val message: String = if (sizeBytes in 1..512000 && (mime.startsWith("text/") || ext in textExt)) {
+            val content = runCatching { resolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }.getOrNull().orEmpty()
+            "📎 File: $name ($sizeText)\n\n" + content.take(6000)
+        } else {
+            "📎 File: $name ($sizeText) — boss ne ye file bheji hai. Is file ke saath kya karna hai?"
+        }
+        if (!JarvisConversationService.isServiceRunning()) {
+            (activity as? MainActivity)?.handleMicOrOrbClick()
+        }
+        JarvisConversationService.sendTextMessage(message)
+        Toast.makeText(requireContext(), "File sent to Jarvis", Toast.LENGTH_SHORT).show()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -146,7 +183,16 @@ class ChatFragment : Fragment() {
         }
 
         binding.btnAttach.setOnClickListener {
-            imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            AlertDialog.Builder(requireContext())
+                .setTitle("Send to Jarvis")
+                .setItems(arrayOf("Image", "File (any type)")) { _, which ->
+                    if (which == 0) {
+                        imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    } else {
+                        filePicker.launch(arrayOf("*/*"))
+                    }
+                }
+                .show()
         }
 
         observeChatTurns()
