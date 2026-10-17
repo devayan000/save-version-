@@ -69,7 +69,7 @@ object AgentEngine {
         if (FeatureFlags.isEnabled(FeatureFlags.userMemory)) {
             val memoryBlock = UserMemory.contextBlock(context, request)
             if (memoryBlock.isNotBlank()) sb.insert(0, memoryBlock)
-            UserMemory.observe(context, userInput)
+            UserMemory.observe(context, request)
         }
         if (FeatureFlags.isEnabled(FeatureFlags.specialistPersonas)) {
             val persona = SpecialistPersonas.select(userInput)
