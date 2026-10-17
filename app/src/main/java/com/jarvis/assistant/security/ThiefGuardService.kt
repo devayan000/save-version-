@@ -56,15 +56,12 @@ class ThiefGuardService : Service(), SensorEventListener {
     private var flatAt: Long = 0L
     private var lastTriggerAt: Long = 0L
     private var cameraThread: HandlerThread? = null
-    private var tts: TextToSpeech? = null
-    private var ttsReady = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         startAsForeground()
-        tts = TextToSpeech(this) { status -> ttsReady = status == TextToSpeech.SUCCESS }
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         accelerometer?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
@@ -75,8 +72,6 @@ class ThiefGuardService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         runCatching { sensorManager.unregisterListener(this) }
-        tts?.shutdown()
-        tts = null
         cameraThread?.quitSafely()
         cameraThread = null
         super.onDestroy()
@@ -130,14 +125,12 @@ class ThiefGuardService : Service(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     private fun onLiftDetected() {
-        Log.w(TAG, "Unauthorized lift detected — capturing selfie")
-        captureSelfie()
-        if (ttsReady) {
-            tts?.speak(
-                "Intruder alert. This phone is being watched. Your photo has been taken.",
-                TextToSpeech.QUEUE_FLUSH, null, "thief_alert"
-            )
+        Log.w(TAG, "Unauthorized lift detected - capturing silently")
+        val prefs = (application as? com.jarvis.assistant.JarvisApp)?.preferences
+        if (prefs != null) {
+            prefs.thiefGuardUnseenCaptures = prefs.thiefGuardUnseenCaptures + 1
         }
+        captureSelfie()
     }
 
     private fun captureSelfie() {
