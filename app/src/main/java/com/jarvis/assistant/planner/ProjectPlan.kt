@@ -69,10 +69,14 @@ data class Task(
         put("order", order)
     }
     companion object {
+        private fun stringList(o: JSONObject, key: String): List<String> {
+            val arr = o.optJSONArray(key) ?: return emptyList()
+            return (0 until arr.length()).map { arr.optString(it, "") }
+        }
         fun fromJson(o: JSONObject) = Task(
             o.getString("id"), o.getString("title"), o.optString("description", ""),
             o.optString("status", TaskStatus.NOT_STARTED.name),
-            (0 until o.optJSONArray("dependencies").length()).map { it.toString() },
+            stringList(o, "dependencies"),
             o.optString("acceptanceCriteria", ""),
             o.optInt("order", 0)
         )
