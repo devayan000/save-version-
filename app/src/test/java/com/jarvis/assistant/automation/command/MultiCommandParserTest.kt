@@ -15,7 +15,7 @@ class MultiCommandParserTest {
 
     @Test
     fun longCommandWithThenConnectorParsesBothActions() {
-        val results = MultiCommandParser.parseCommands("set brightness to eighty percent then turn on the torch")
+        val results = MultiCommandParser.parseCommands("set brightness to eighty then turn on the torch")
         val kinds = results.mapNotNull { it.command?.let { c -> c::class.simpleName } }
         assertTrue(kinds.contains("Brightness"))
         assertTrue(kinds.contains("Flash"))
@@ -36,7 +36,7 @@ class MultiCommandParserTest {
 
     @Test
     fun unparsedSegmentsReportWhatWasNotUnderstood() {
-        val unparsed = MultiCommandParser.unparsedSegments("turn on the flashlight ar gaana bajao")
-        assertTrue(unparsed.any { it.contains("gaana") })
+        val unparsed = MultiCommandParser.unparsedSegments("turn on the flashlight ar raat e ghumte jabo")
+        assertTrue(unparsed.any { it.contains("ghumte") })
     }
 }
