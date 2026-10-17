@@ -93,7 +93,10 @@ object LicenseManager {
         }
     }
 
-    fun isPremium(context: Context): Boolean = InstallationManager.isPremium(context)
+    // A premium badge/chip is only real when a license device token exists.
+    // Normal users (no successful activation) never qualify, even if the stored flag is stale.
+    fun isPremium(context: Context): Boolean =
+        InstallationManager.isPremium(context) && InstallationManager.deviceToken(context) != null
 
     private fun appVersion(context: Context): String = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0"
