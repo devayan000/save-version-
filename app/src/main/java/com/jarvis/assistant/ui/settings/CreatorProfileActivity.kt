@@ -5,7 +5,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import android.graphics.Typeface
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.jarvis.assistant.R
+import com.jarvis.assistant.bugs.BugReportRepository
+import com.jarvis.assistant.security.CreatorAuthenticationService
 import com.jarvis.assistant.databinding.ActivityCreatorProfileBinding
 import com.jarvis.assistant.security.OwnerProfile
 import com.jarvis.assistant.util.ThemeManager
@@ -27,6 +32,8 @@ class CreatorProfileActivity : AppCompatActivity() {
             "Created & developed by ${OwnerProfile.CREATOR_NAME} — the mind behind ${OwnerProfile.BRAND}."
 
         binding.btnBack.setOnClickListener { finish() }
+
+        setupCreatorConsole()
 
         binding.rowPortfolio.setOnClickListener { openUrl(OwnerProfile.PORTFOLIO_URL) }
         binding.rowTelegram.setOnClickListener { openUrl(OwnerProfile.TELEGRAM_URL) }
@@ -56,6 +63,86 @@ class CreatorProfileActivity : AppCompatActivity() {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (_: Exception) {
             Toast.makeText(this, "Unable to open link", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Creator Access card: verify the creator key here, then browse saved bugs and improvements. */
+    private fun setupCreatorConsole() {
+        val root = binding.root as? android.view.ViewGroup ?: return
+        var column: android.view.ViewGroup? = null
+        for (i in 0 until root.childCount) {
+            val child = root.getChildAt(i)
+            if (child is android.widget.ScrollView && child.childCount > 0) {
+                column = child.getChildAt(0) as? android.view.ViewGroup
+                break
+            }
+        }
+        val target = column ?: return
+
+        val card = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.bg_jarvis_action_card)
+            setPadding(48, 40, 48, 40)
+        }
+        buildConsoleCard(card)
+        target.addView(card, 0)
+    }
+
+    private fun buildConsoleCard(card: android.widget.LinearLayout) {
+        card.removeAllViews()
+        card.addView(android.widget.TextView(this).apply {
+            text = "CREATOR ACCESS"
+            textSize = 16f
+            setTypeface(Typeface.DEFAULT_BOLD)
+        })
+        if (!CreatorAuthenticationService.isCreator(this)) {
+            card.addView(android.widget.TextView(this).apply {
+                text = "Enter the creator key to unlock the bug console."
+                textSize = 13f
+                setPadding(0, 8, 0, 12)
+            })
+            val keyInput = android.widget.EditText(this).apply {
+                hint = "Creator key"
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            card.addView(keyInput)
+            card.addView(MaterialButton(this).apply {
+                text = "Verify creator key"
+                setOnClickListener {
+                    if (CreatorAuthenticationService.verify(this@CreatorProfileActivity, keyInput.text.toString().trim())) {
+                        Toast.makeText(this@CreatorProfileActivity, "Creator verified - bug console unlocked.", Toast.LENGTH_LONG).show()
+                        buildConsoleCard(card)
+                    } else {
+                        Toast.makeText(this@CreatorProfileActivity, "Invalid creator key.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            })
+        } else {
+            val repo = BugReportRepository(this)
+            val bugs = repo.loadAll()
+            card.addView(android.widget.TextView(this).apply {
+                text = "Creator verified. Bugs saved: " + bugs.size
+                textSize = 14f
+                setPadding(0, 10, 0, 12)
+            })
+            card.addView(MaterialButton(this).apply {
+                text = "View bugs, errors & improvements"
+                setOnClickListener {
+                    if (bugs.isEmpty()) {
+                        Toast.makeText(this@CreatorProfileActivity, "No bugs detected yet.", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    val items = bugs.take(50).map { b ->
+                        b.feature + " | " + b.errorType + " | " + b.severity + " | " + b.status +
+                            (b.suggestedFix?.let { "\n   Fix: " + it.take(120) } ?: "")
+                    }.toTypedArray()
+                    MaterialAlertDialogBuilder(this@CreatorProfileActivity)
+                        .setTitle("BUGS, ERRORS & IMPROVEMENTS (" + bugs.size + ")")
+                        .setItems(items, null)
+                        .setPositiveButton("Close", null)
+                        .show()
+                }
+            })
         }
     }
 }
