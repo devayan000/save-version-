@@ -87,6 +87,10 @@ object GoogleWorkspaceManager {
     fun preferences(context: Context) = GoogleWorkspacePreferences(context)
 
     /** First step of every authorization: silent token if grants exist, else a consent intent. */
+    /** The Google "access blocked / app not verified" screen is fixed in Google Cloud Console. */
+    private fun blockHelpText(base: String): String = base +
+        "\n\nFIX: Google Cloud Console > APIs & Services > OAuth consent screen > Test users > add your Google email, save, wait 5 minutes, then retry."
+
     fun requestAuthorization(context: Context, onToken: (String) -> Unit, onNeedsConsent: (android.content.IntentSender) -> Unit, onError: (String) -> Unit) {
         val request = AuthorizationRequest.Builder()
             .setRequestedScopes(SCOPES)
@@ -102,7 +106,15 @@ object GoogleWorkspaceManager {
                     else -> onError("Google did not return a token or a consent request.")
                 }
             }
-            .addOnFailureListener { e -> onError("Google authorization failed: " + (e.message ?: "unknown error")) }
+            .addOnFailureListener { e ->
+                val msg = e.message ?: "unknown error"
+                val base = "Google authorization failed: " + msg
+                onError(
+                    if (msg.contains("blocked", true) || msg.contains("not verified", true) ||
+                        msg.contains("access_denied", true) || msg.startsWith("10:")
+                    ) blockHelpText(base) else base
+                )
+            }
     }
 
     /** Called when the consent screen closes. */
@@ -120,7 +132,12 @@ object GoogleWorkspaceManager {
                 onToken(token)
             }
         } catch (e: Exception) {
-            onError("Google consent failed: " + (e.message ?: "unknown error"))
+            val cmsg = (e.message ?: "unknown error")
+                        val cbase = "Google consent failed: " + cmsg
+                        onError(
+                            if (cmsg.contains("blocked", true) || cmsg.contains("not verified", true) || cmsg.contains("access_denied", true))
+                                blockHelpText(cbase) else cbase
+                        )
         }
     }
 
