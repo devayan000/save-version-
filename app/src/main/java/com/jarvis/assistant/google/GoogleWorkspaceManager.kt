@@ -10,6 +10,7 @@ import androidx.security.crypto.MasterKey
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.Scope
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -297,7 +298,7 @@ object GoogleWorkspaceManager {
                         Request.Builder()
                             .url("https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
                             .header("Authorization", "Bearer " + token)
-                            .post(okhttp3.RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), payload.toString()))
+                            .post(okhttp3.RequestBody.create("application/json; charset=utf-8".toMediaType(), payload.toString()))
                             .build()
                     ).execute().use { r ->
                         val text = r.body?.string().orEmpty()
@@ -326,7 +327,7 @@ object GoogleWorkspaceManager {
                         Request.Builder()
                             .url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
                             .header("Authorization", "Bearer " + token)
-                            .post(okhttp3.RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), body.toString()))
+                            .post(okhttp3.RequestBody.create("application/json; charset=utf-8".toMediaType(), body.toString()))
                             .build()
                     ).execute().use { r ->
                         val text = r.body?.string().orEmpty()
