@@ -14,6 +14,12 @@ object TerminalManager {
 
     data class TerminalResult(val id: String, val command: String, val output: String, val exitCode: Int)
 
+    // Commands that need a real Linux filesystem — routed through proot + Alpine rootfs.
+    private val prootCommands = setOf(
+        "apt", "apt-get", "pkg", "apk", "python", "python3", "pip", "pip3",
+        "node", "nodejs", "npm", "npx", "gcc", "g++", "bash", "wget", "curl", "crontab"
+    )
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val history = ArrayDeque<TerminalResult>()
     private val lock = Any()
@@ -26,6 +32,35 @@ object TerminalManager {
     /** Fire-and-forget background execution so the UI and assistant stay responsive. */
     fun run(command: String, timeoutMs: Long = 30000, onDone: (TerminalResult) -> Unit = {}) {
         scope.launch { onDone(runSuspend(command, timeoutMs)) }
+    }
+
+    /** Explicit one-time environment setup (also happens automatically on first package command). */
+    fun setupEnvironment(onProgress: (String) -> Unit = {}, onDone: (Boolean) -> Unit = {}) {
+        scope.launch {
+            val ready = runCatching { PRootBootstrap.setup(onProgress) }.getOrDefault(false)
+            onDone(ready)
+        }
+    }
+
+    fun isLinuxEnvReady(): Boolean = PRootBootstrap.isReady()
+
+    /**
+     * Maps Termux-style commands onto the Alpine rootfs and decides whether the
+     * command needs proot. Returns (command, needsProot).
+     */
+    private fun routeCommand(cmd: String): Pair<String, Boolean> {
+        val parts = cmd.split(Regex("\\s+"))
+        val first = parts.firstOrNull()?.lowercase() ?: ""
+        if (first !in prootCommands) return cmd to false
+        val mapped = when (first) {
+            "apt", "apt-get", "pkg" -> {
+                val rest = parts.drop(1)
+                val adjusted = if (rest.firstOrNull()?.lowercase() == "install") listOf("add") + rest.drop(1) else rest
+                "apk " + adjusted.joinToString(" ")
+            }
+            else -> cmd
+        }
+        return mapped to true
     }
 
     /** Suspend version for agent tools and services. */
@@ -49,13 +84,38 @@ object TerminalManager {
             return@withContext result
         }
         try {
-            val pb = ProcessBuilder("sh", "-c", trimmed).redirectErrorStream(true)
+            val (mapped, useProot) = routeCommand(trimmed)
+            val bootstrapLog = StringBuilder()
+            if (useProot && !PRootBootstrap.isReady()) {
+                // First run: download proot + Alpine rootfs once (APK size stays the same).
+                val ready = runCatching { PRootBootstrap.setup { bootstrapLog.appendLine(it) } }.getOrDefault(false)
+                if (!ready) {
+                    val result = TerminalResult(
+                        newId(), command,
+                        (bootstrapLog.toString().trim() + "\nEnvironment setup failed — check internet connection.").trim(),
+                        -1
+                    )
+                    addToHistory(result)
+                    return@withContext result
+                }
+            }
+            val effectiveTimeout = if (useProot) maxOf(timeoutMs, 600_000) else timeoutMs
+            val pb = if (useProot) {
+                ProcessBuilder(PRootBootstrap.launchCommand(mapped)).redirectErrorStream(true)
+            } else {
+                ProcessBuilder("sh", "-c", trimmed).redirectErrorStream(true)
+            }
             pb.directory(File(currentDir()))
+            if (useProot) {
+                pb.environment()["HOME"] = "/root"
+                pb.environment()["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            }
             val proc = pb.start()
             val out = StringBuilder()
+            if (bootstrapLog.isNotBlank()) out.appendLine(bootstrapLog.toString().trim())
             val reader = Thread { proc.inputStream.bufferedReader().forEachLine { out.appendLine(it) } }
             reader.start()
-            val exited = proc.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+            val exited = proc.waitFor(effectiveTimeout, TimeUnit.MILLISECONDS)
             if (!exited) proc.destroyForcibly()
             reader.join(2000)
             val result = TerminalResult(
