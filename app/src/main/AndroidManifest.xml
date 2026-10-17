@@ -171,6 +171,7 @@
         <activity android:name=".timemachine.TimeMachineActivity" android:exported="false" />
         <activity android:name=".autopsy.FailureAutopsyActivity" android:exported="false" />
         <activity android:name=".developer.GitHubResearchActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".developer.CreatorRepoActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".terminal.TerminalActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".google.GoogleWorkspaceActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
 
