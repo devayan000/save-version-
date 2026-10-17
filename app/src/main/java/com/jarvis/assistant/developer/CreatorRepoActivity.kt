@@ -88,7 +88,7 @@ class CreatorRepoActivity : AppCompatActivity() {
         }
 
         root.addView(title)
-        root.addView(hint)
+        root.addView(hintText)
         root.addView(input)
         root.addView(button)
         root.addView(status)
