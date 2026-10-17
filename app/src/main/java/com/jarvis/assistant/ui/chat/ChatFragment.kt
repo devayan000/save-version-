@@ -141,6 +141,10 @@ class ChatFragment : Fragment() {
             }
         }
 
+        binding.chipGoogleWorkspace.setOnClickListener {
+            startActivity(Intent(requireContext(), com.jarvis.assistant.google.GoogleWorkspaceActivity::class.java))
+        }
+
         binding.btnAttach.setOnClickListener {
             imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
