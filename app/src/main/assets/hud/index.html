@@ -86,7 +86,12 @@
     position: relative; width: 300px; height: 300px;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
-  #blob-canvas { width: 100%; height: 100%; }
+  #miko-avatar { position: relative; width: 100%; height: 100%; z-index: 1; }
+  #miko-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+  #miko-avatar[data-miko="idle"] { animation: mikoSleep 3.6s ease-in-out infinite; transform-origin: 50% 90%; }
+  @keyframes mikoSleep { 0%,100% { transform: scale(1) } 50% { transform: scale(0.982) translateY(5px) } }
+  #miko-avatar[data-miko="listening"] { animation: mikoWake .45s ease-out; }
+  @keyframes mikoWake { 0% { transform: scale(.94) } 100% { transform: scale(1) } }
   .orb-caption {
     margin-top: 26px; font-family: var(--font-mono); font-size: .72rem;
     font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
@@ -163,7 +168,12 @@
   </header>
   <main class="orb-center-stage">
     <div class="reactor-housing gpu" id="reactor-assembly">
-      <canvas id="blob-canvas"></canvas>
+      <div id="miko-avatar" data-miko="idle">
+        <img src="avatar/back-hair.png" alt="">
+        <img id="miko-face" src="avatar/eyes-closed-mouth-closed.png" alt="">
+        <img src="avatar/front-hair.png" alt="">
+        <img src="avatar/red-tassel-ribbons.png" alt="">
+      </div>
     </div>
     <div class="orb-caption" id="orb-caption">SYSTEM ONLINE &bull; TAP TO SPEAK</div>
   </main>
@@ -298,6 +308,7 @@ void main(){
   var scene, camera, renderer, blob, uniforms;
   var rotationX = 0, rotationY = 0;
   function initBlob(){
+    return; // 2D Miko avatar replaces the 3D orb
     var canvas = document.getElementById('blob-canvas');
     if (typeof THREE === 'undefined') return;
     scene = new THREE.Scene();
@@ -362,6 +373,7 @@ void main(){
     statusDot.style.background = cfg.dot;
     statusDot.style.boxShadow = '0 0 10px ' + cfg.dot;
     if (typeof audioLevel === 'number' && uniforms) uniforms.u_audio.value = Math.min(audioLevel, 1);
+    if (window.__mikoSetState) window.__mikoSetState(s);
   }
 
   function renderLocalClock(){
@@ -432,6 +444,35 @@ void main(){
   window.updateLiveAssistantResponse = function(){};
   window.finalizeLiveTurn = function(){};
   window.syncChatTurns = function(){};
+
+  // ---- 2D Miko avatar controller ----
+  var mikoGirl = document.getElementById('miko-avatar');
+  var mikoFace = document.getElementById('miko-face');
+  var MIKO = {
+    sleep: 'avatar/eyes-closed-mouth-closed.png',
+    open:  'avatar/eyes-open-mouth-closed.png',
+    half:  'avatar/eyes-open-mouth-half.png',
+    shout: 'avatar/eyes-open-mouth-open.png'
+  };
+  var mikoTalk = [MIKO.open, MIKO.half, MIKO.shout, MIKO.half];
+  var mikoIdx = 0, mikoTimer = null;
+  function mikoSetState(state){
+    if (!mikoFace || !mikoGirl) return;
+    mikoGirl.dataset.miko = state;
+    if (mikoTimer){ clearInterval(mikoTimer); mikoTimer = null; }
+    if (state === 'speaking'){
+      mikoIdx = 0;
+      mikoTimer = setInterval(function(){
+        mikoFace.src = mikoTalk[mikoIdx % mikoTalk.length];
+        mikoIdx++;
+      }, 140);
+    } else if (state === 'listening' || state === 'thinking'){
+      mikoFace.src = MIKO.open;
+    } else {
+      mikoFace.src = MIKO.sleep;
+    }
+  }
+  window.__mikoSetState = mikoSetState;
 
   function callBridge(fn){ if (window.JarvisBridge && window.JarvisBridge[fn]) window.JarvisBridge[fn](); }
   reactorAssembly.addEventListener('click', function(){ callBridge('onMicClicked'); });
