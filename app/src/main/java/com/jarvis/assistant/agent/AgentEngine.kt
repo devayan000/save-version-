@@ -72,7 +72,7 @@ object AgentEngine {
             UserMemory.observe(context, request)
         }
         if (FeatureFlags.isEnabled(FeatureFlags.specialistPersonas)) {
-            val persona = SpecialistPersonas.select(userInput)
+            val persona = SpecialistPersonas.select(request)
             if (persona != SpecialistPersonas.Persona.GENERAL) sb.insert(0, persona.systemBlock)
         }
         if (FeatureFlags.isEnabled(FeatureFlags.taskPlanning)) {
