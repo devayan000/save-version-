@@ -76,7 +76,7 @@ object AgentEngine {
             if (persona != SpecialistPersonas.Persona.GENERAL) sb.insert(0, persona.systemBlock)
         }
         if (FeatureFlags.isEnabled(FeatureFlags.taskPlanning)) {
-            val plan = TaskPlanner.plan(userInput)
+            val plan = TaskPlanner.plan(request)
             sb.insert(0, TaskPlanner.planBlock(plan))
         }
         if (FeatureFlags.isEnabled(FeatureFlags.toolOrchestration)) {
