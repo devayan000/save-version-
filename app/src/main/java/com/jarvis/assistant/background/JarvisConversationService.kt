@@ -3389,6 +3389,11 @@ class JarvisConversationService : Service() {
             val firstStart = resultArr.getJSONObject(0).optDouble("start", 0.0)
             val lastEnd = resultArr.getJSONObject(resultArr.length() - 1).optDouble("end", 0.0)
             val duration = lastEnd - firstStart
+            // Noise guard: reject very short utterance bursts (TV, claps, distant noise)
+            if (duration < 0.25) {
+                Log.w("JarvisService", "WAKE REJECTED: utterance too short (" + duration + "s) - likely noise. Ignored.")
+                return
+            }
 
             Log.i("JarvisService", "Vosk candidate hypothesis: '$cleanPhrase' (words=$wordList, avgConf=$avgConf, duration=${duration}s)")
 
@@ -3396,20 +3401,20 @@ class JarvisConversationService : Service() {
             // 4. Acoustic Verification:
             // "jarvis" must be specifically recognized with confidence
             val jarvisConf = wordConfMap["jarvis"] ?: 0.0
-            if (jarvisConf < 0.70) {
+            if (jarvisConf < 0.78) {
                 Log.w("JarvisService", "WAKE REJECTED: 'jarvis' word confidence too low ($jarvisConf < 0.70). Ignored.")
                 return
             }
 
             if (wordList.size == 1 && wordList[0] == "jarvis") {
                 // Standalone single-word "jarvis"
-                if (avgConf < 0.75) {
+                if (avgConf < 0.80) {
                     Log.w("JarvisService", "WAKE REJECTED: Standalone 'jarvis' failed checks (conf=$avgConf). Ignored.")
                     return
                 }
             } else {
                 // Multi-word phrases like "hey jarvis", "hello jarvis", "ok jarvis"
-                if (avgConf < 0.65) {
+                if (avgConf < 0.72) {
                     Log.w("JarvisService", "WAKE REJECTED: Wake phrase failed checks (conf=$avgConf). Ignored.")
                     return
                 }
