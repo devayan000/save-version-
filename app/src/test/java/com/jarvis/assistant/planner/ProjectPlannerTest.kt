@@ -2,7 +2,10 @@ package com.jarvis.assistant.planner
 
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class ProjectPlannerTest {
     @Test fun taskStatusEnumHasFourStates() {
         assertEquals(4, TaskStatus.values().size)
@@ -40,7 +43,7 @@ class ProjectPlannerTest {
         val task1 = Task("t1", "Design", status = "NOT_STARTED")
         val task2 = Task("t2", "Build", dependencies = listOf("t1"), status = "IN_PROGRESS")
         val task3 = Task("t3", "Test", dependencies = listOf("nonexistent"))
-        val store = ProjectPlanStore(InstrumentationRegistryProxy.context)
+        val store = ProjectPlanStore(org.robolectric.RuntimeEnvironment.getApplication())
         store.createPlan("Test", "Goal", "", "", "")
         val plan = store.getAll().first()
         store.addMilestone(plan.id, "M1")
@@ -49,10 +52,8 @@ class ProjectPlannerTest {
         val withTask = store.get(plan.id)!!
         // Verify the store persists across calls
         assertNotNull(store.get(plan.id))
+        val warnings = store.analyzePlan(plan.id)
+        assertTrue(warnings.any { it.contains("blocked") || it.contains("unknown") })
     }
 }
 
-// Minimal context proxy for unit tests that need a Context.
-private object InstrumentationRegistryProxy {
-    val context: android.content.Context get() = throw IllegalStateException("Use Robolectric or device for store tests")
-}
