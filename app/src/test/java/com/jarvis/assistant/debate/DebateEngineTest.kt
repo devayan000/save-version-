@@ -2,7 +2,10 @@ package com.jarvis.assistant.debate
 
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class DebateEngineTest {
     @Test fun debateSessionJsonRoundTrip() {
         val session = DebateEngine.DebateSession("d1", "Use Kotlin Multiplatform",
