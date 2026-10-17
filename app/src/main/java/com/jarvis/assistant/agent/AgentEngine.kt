@@ -27,6 +27,37 @@ object AgentEngine {
 
         val sb = StringBuilder(basePrompt)
 
+        // DEV STYLE: high-risk actions always ask the owner for permission first.
+        val risk = PermissionGate.riskCheck(userInput)
+        if (risk.level != PermissionGate.Level.READ_ONLY) return risk.message
+        // If the owner just confirmed a pending high-risk action, resume it.
+        val request = if (risk.message.isNotBlank() && risk.message != userInput) risk.message else userInput
+
+        // DEV STYLE: Skill Evolution Lab - fully offline self-improvement report.
+        if (Regex("\\bskill\\s*(?:evolution\\s*)?lab\\b", RegexOption.IGNORE_CASE).containsMatchIn(request)) {
+            return com.jarvis.assistant.agent.skills.SkillEvolutionLab.labReport()
+        }
+
+        // DEV STYLE: Jarvis never goes dark - offline answers come first.
+        if (!com.jarvis.assistant.util.OfflineEngine.isOnline(context)) {
+            com.jarvis.assistant.util.OfflineEngine.localAnswer(context, request)?.let { return it }
+            val universePlannerOffline = com.jarvis.assistant.agent.planning.ParallelUniversePlanner
+            if (universePlannerOffline.handles(request)) {
+                return universePlannerOffline.report(universePlannerOffline.extractGoal(request))
+            }
+            return com.jarvis.assistant.util.OfflineEngine.offlineFallback()
+        }
+
+        // DEV STYLE: Multi-Agent System - Main JARVIS delegates to specialists.
+        val teamBlock = com.jarvis.assistant.agent.team.AgentTeam.systemBlock(request)
+        if (teamBlock.isNotBlank()) sb.insert(0, teamBlock)
+
+        // DEV STYLE: Parallel Universe Planner - three strategies for one goal.
+        val universePlanner = com.jarvis.assistant.agent.planning.ParallelUniversePlanner
+        if (universePlanner.handles(request)) {
+            sb.insert(0, universePlanner.block(universePlanner.extractGoal(request)))
+        }
+
         if (FeatureFlags.isEnabled(FeatureFlags.emotionalIntelligence)) {
             val emotion = EmotionalIntelligence.detect(userInput)
             sb.insert(0, EmotionalIntelligence.systemPrefix(emotion))
