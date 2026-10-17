@@ -37,6 +37,15 @@ import com.jarvis.assistant.media.MediaLibraryActivity
 import com.jarvis.assistant.screencontext.ScreenContextActivity
 import com.jarvis.assistant.share.ShareReceiverActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import com.jarvis.assistant.planner.ProjectPlannerActivity
+import com.jarvis.assistant.promptlab.PromptLabActivity
+import com.jarvis.assistant.personality.PersonalitySettingsActivity
+import com.jarvis.assistant.photomemory.PhotoMemoryActivity
+import com.jarvis.assistant.browser.BrowserAgentActivity
+import com.jarvis.assistant.decision.DecisionDnaActivity
+import com.jarvis.assistant.debate.DebateActivity
+import com.jarvis.assistant.timemachine.TimeMachineActivity
+import com.jarvis.assistant.autopsy.FailureAutopsyActivity
 import android.content.ClipData
 import android.content.ClipboardManager
 
@@ -216,7 +225,7 @@ class SettingsFragment : Fragment() {
         binding.rowAppIdentity.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Jarvis Control Center")
-                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings", "Share to Jarvis", "Notification Briefing", "Camera Scanner", "Battery Intelligence", "Media Library", "Screen Context")) { _, which ->
+                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings", "Share to Jarvis", "Notification Briefing", "Camera Scanner", "Battery Intelligence", "Media Library", "Screen Context", "Project Planner", "Prompt Lab", "Personality", "Photo Memory", "Browser Agent", "Decision DNA", "Debate Chamber", "Time Machine", "Failure Autopsy")) { _, which ->
                     when (which) {
                         0 -> MaterialAlertDialogBuilder(requireContext()).setTitle("JARVIS App Identity").setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext())).setPositiveButton("Close", null).show()
                         1 -> showUpdateDialog()
@@ -232,6 +241,15 @@ class SettingsFragment : Fragment() {
                         11 -> startActivity(Intent(requireContext(), BatteryActivity::class.java))
                         12 -> startActivity(Intent(requireContext(), MediaLibraryActivity::class.java))
                         13 -> startActivity(Intent(requireContext(), ScreenContextActivity::class.java))
+                        14 -> startActivity(Intent(requireContext(), ProjectPlannerActivity::class.java))
+                        15 -> startActivity(Intent(requireContext(), PromptLabActivity::class.java))
+                        16 -> startActivity(Intent(requireContext(), PersonalitySettingsActivity::class.java))
+                        17 -> startActivity(Intent(requireContext(), PhotoMemoryActivity::class.java))
+                        18 -> startActivity(Intent(requireContext(), BrowserAgentActivity::class.java))
+                        19 -> startActivity(Intent(requireContext(), DecisionDnaActivity::class.java))
+                        20 -> startActivity(Intent(requireContext(), DebateActivity::class.java))
+                        21 -> startActivity(Intent(requireContext(), TimeMachineActivity::class.java))
+                        22 -> startActivity(Intent(requireContext(), FailureAutopsyActivity::class.java))
                     }
                 }
                 .show()

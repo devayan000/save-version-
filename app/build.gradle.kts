@@ -27,8 +27,8 @@ android {
         applicationId = "com.jarvis.assistant"
         minSdk = 26
         targetSdk = 34
-        versionCode = 149
-        versionName = "2.3.0"
+        versionCode = 150
+        versionName = "2.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "DEVELOPER_NAME", buildConfigString(developerName.ifBlank { "Unverified developer" }))
@@ -113,6 +113,9 @@ dependencies {
     // ML Kit for barcode scanning + on-device OCR
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     implementation("com.google.mlkit:text-recognition:16.0.0")
+    // Robolectric for local JVM unit tests
+    testImplementation("org.robolectric:robolectric:4.12.2")
+    testImplementation("androidx.test:core:1.5.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")

@@ -160,6 +160,16 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <activity android:name=".planner.ProjectPlannerActivity" android:exported="false" />
+        <activity android:name=".promptlab.PromptLabActivity" android:exported="false" />
+        <activity android:name=".personality.PersonalitySettingsActivity" android:exported="false" />
+        <activity android:name=".personality.MemoryManagementActivity" android:exported="false" />
+        <activity android:name=".photomemory.PhotoMemoryActivity" android:exported="false" />
+        <activity android:name=".browser.BrowserAgentActivity" android:exported="false" />
+        <activity android:name=".decision.DecisionDnaActivity" android:exported="false" />
+        <activity android:name=".debate.DebateActivity" android:exported="false" />
+        <activity android:name=".timemachine.TimeMachineActivity" android:exported="false" />
+        <activity android:name=".autopsy.FailureAutopsyActivity" android:exported="false" />
 
         <service
             android:name=".background.JarvisConversationService"
