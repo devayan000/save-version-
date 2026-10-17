@@ -19,7 +19,7 @@ object CommandParser {
     private val AMBIGUOUS_PLAY_WORDS = setOf(
         "something", "anything", "whatever", "that", "this", "it", "one",
         "song", "video", "music", "gana", "gane", "track",
-        "kuch", "kuch bhi", "pata nahi", "i don't know", "idk", "um", "uh", "hmm", "huh"
+        "gaana", "gaan", "gana bajao", "kuch", "kuch bhi", "pata nahi", "i don't know", "idk", "um", "uh", "hmm", "huh"
     )
 
     /**
