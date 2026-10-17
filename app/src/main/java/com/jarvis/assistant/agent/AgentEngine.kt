@@ -84,7 +84,7 @@ object AgentEngine {
             if (tools.isNotBlank()) sb.insert(0, tools)
             // Background web search: for questions or explicit search requests, fetch live
             // web results first so the answer is grounded in fresh, real information.
-            if (looksLikeSearchNeed(userInput)) {
+            if (looksLikeSearchNeed(request)) {
                 val searchBlock = withContext(Dispatchers.IO) { buildSearchContext(context, userInput) }
                 if (searchBlock.isNotBlank()) sb.insert(0, searchBlock)
             }
