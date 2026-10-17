@@ -35,10 +35,12 @@ object UserMemory {
     }
     fun listAll(ctx: Context): List<MemoryFact> {
         val facts = loadFacts(ctx)
-        return facts.keys().map { key ->
+        val result = mutableListOf<MemoryFact>()
+        for (key in facts.keys()) {
             val obj = facts.getJSONObject(key)
-            MemoryFact(key, obj.optString("value"), obj.optLong("createdAt"))
+            result.add(MemoryFact(key, obj.optString("value"), obj.optLong("createdAt")))
         }
+        return result
     }
     fun clearAll(ctx: Context) { prefs(ctx).edit().remove(KEY_FACTS).apply() }
 

@@ -12,7 +12,7 @@ object SpecialistPersonas {
     }
     fun select(input: String): Persona {
         val lower = input.lowercase()
-        for (persona in Persona.values().filter { it != GENERAL }) {
+        for (persona in Persona.values().filter { it != Persona.GENERAL }) {
             if (persona.triggers.any { lower.contains(it) }) return persona
         }
         return Persona.GENERAL
