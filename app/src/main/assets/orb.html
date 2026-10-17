@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="embedded">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
@@ -130,7 +130,7 @@
   .reactor-housing.rendered::before { display: none; }
   #blob-canvas { position: relative; z-index: 1; touch-action: none; }
   @keyframes liquidMorph { to { border-radius: 61% 39% 44% 56%; transform: rotate(16deg) scale(1.06); } }
-  body.embedded, body.embedded #hud { background: transparent; padding: 0; }
+  html.embedded, body.embedded, body.embedded #hud { background: transparent; padding: 0; }
   body.embedded .header-bar, body.embedded footer, body.embedded .orb-caption { display: none; }
   body.embedded .orb-center-stage { width: 100%; height: 100%; min-height: 0; }
   body.embedded .reactor-housing { width: min(100vw, 100vh); height: min(100vw, 100vh); max-width: 100%; max-height: 100%; }
@@ -217,8 +217,8 @@ float snoise(vec3 v){
   return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
 }
 void main(){
-  vUv = uv; v_normal = normal;
-  float n = snoise(position*10.0 + u_time*u_speed);
+  vUv = uv; v_normal = normalize(normalMatrix * normal);
+  float n = snoise(position*1.4 + u_time*u_speed*0.24);
   float amp = u_amp + u_audio*0.14;
   vec3 newPos = position + normal * n * amp * u_progress;
   v_position = newPos;
@@ -229,13 +229,17 @@ void main(){
 varying vec2 vUv; varying vec3 v_normal; varying vec3 v_position;
 uniform float u_time; uniform vec3 u_cA; uniform vec3 u_cB; uniform vec3 u_cC;
 void main(){
-  float m1 = sin(v_position.x*10.0 + u_time*0.8)*0.5 + 0.5;
-  float m2 = cos(v_position.y*10.0 - u_time*0.72)*0.5 + 0.5;
+  float m1 = sin(v_position.x*1.4 + u_time*0.4)*0.5 + 0.5;
+  float m2 = cos(v_position.y*1.8 - u_time*0.36)*0.5 + 0.5;
   vec3 base = mix(u_cA, u_cB, m1);
   base = mix(base, u_cC, m2*0.7);
   vec3 lightDir = normalize(vec3(1.0, 1.5, 2.0));
-  float diff = max(dot(v_normal, lightDir), 0.0);
-  gl_FragColor = vec4(base * (0.85 + diff*0.15), 0.96);
+  vec3 normalDirection = normalize(v_normal);
+  float diff = max(dot(normalDirection, lightDir), 0.0);
+  float rim = pow(1.0 - abs(normalDirection.z), 3.0);
+  float specular = pow(max(dot(reflect(-lightDir, normalDirection), vec3(0.0, 0.0, 1.0)), 0.0), 26.0);
+  vec3 glass = mix(base * (0.76 + diff*0.24), vec3(1.0), min(0.85, rim*0.65 + specular*0.85));
+  gl_FragColor = vec4(glass, 0.92);
 }
 </script>
 <script>
