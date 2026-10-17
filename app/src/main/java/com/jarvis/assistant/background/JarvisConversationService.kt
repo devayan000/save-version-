@@ -3409,22 +3409,24 @@ class JarvisConversationService : Service() {
             Log.i("JarvisService", "Vosk candidate hypothesis: '$cleanPhrase' (words=$wordList, avgConf=$avgConf, duration=${duration}s)")
 
             // 4. Acoustic Verification:
-            // 4. Acoustic Verification:
-            // "jarvis" must be specifically recognized with confidence
-            val jarvisConf = wordConfMap["jarvis"] ?: 0.0
-            if (jarvisConf < 0.78) {
-                Log.w("JarvisService", "WAKE REJECTED: 'jarvis' word confidence too low ($jarvisConf < 0.70). Ignored.")
+            // The wake trigger word ("jarvis", a premium custom word, or the
+            // owner's chosen name) must be recognized with solid confidence.
+            val fillers = setOf("hey", "hi", "hello", "ok", "okay", "wake", "up", "sun", "suno")
+            val triggerWords = wakePhrases.flatMap { it.split(" ") }.toSet() - fillers
+            val triggerConf = triggerWords.maxOf { wordConfMap[it] ?: 0.0 }
+            if (triggerConf < 0.78) {
+                Log.w("JarvisService", "WAKE REJECTED: trigger word confidence too low ($triggerConf < 0.78). Ignored.")
                 return
             }
 
-            if (wordList.size == 1 && wordList[0] == "jarvis") {
-                // Standalone single-word "jarvis"
+            if (wordList.size == 1 && wordList[0] in triggerWords) {
+                // Standalone single-word trigger ("jarvis" or the owner's name)
                 if (avgConf < 0.80) {
-                    Log.w("JarvisService", "WAKE REJECTED: Standalone 'jarvis' failed checks (conf=$avgConf). Ignored.")
+                    Log.w("JarvisService", "WAKE REJECTED: Standalone trigger failed checks (conf=$avgConf). Ignored.")
                     return
                 }
             } else {
-                // Multi-word phrases like "hey jarvis", "hello jarvis", "ok jarvis"
+                // Multi-word phrases like "hey jarvis", "wake up ahona"
                 if (avgConf < 0.72) {
                     Log.w("JarvisService", "WAKE REJECTED: Wake phrase failed checks (conf=$avgConf). Ignored.")
                     return
