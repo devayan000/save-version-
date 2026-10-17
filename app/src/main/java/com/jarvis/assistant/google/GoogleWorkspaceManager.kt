@@ -297,7 +297,7 @@ object GoogleWorkspaceManager {
                         Request.Builder()
                             .url("https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
                             .header("Authorization", "Bearer " + token)
-                            .post(RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), payload.toString()))
+                            .post(okhttp3.RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), payload.toString()))
                             .build()
                     ).execute().use { r ->
                         val text = r.body?.string().orEmpty()
@@ -326,7 +326,7 @@ object GoogleWorkspaceManager {
                         Request.Builder()
                             .url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
                             .header("Authorization", "Bearer " + token)
-                            .post(RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), body.toString()))
+                            .post(okhttp3.RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), body.toString()))
                             .build()
                     ).execute().use { r ->
                         val text = r.body?.string().orEmpty()
