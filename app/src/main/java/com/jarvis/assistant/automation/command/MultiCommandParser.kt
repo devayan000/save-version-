@@ -13,7 +13,7 @@ package com.jarvis.assistant.automation.command
 object MultiCommandParser {
 
     private val CONNECTORS = Regex(
-        """(?i)\s*(?:;|,||\bthen\b|\btarpor\b|\ber por\b|\bar por\b|\band then\b|\band\b|\bar\b|\baar\b|\baur\b|\bebong\b)\s*"""
+        """(?i)\s*(?:;|,|।|\bthen\b|\btarpor\b|\ber por\b|\bar por\b|\band then\b|\band\b|\bar\b|\baar\b|\baur\b|\bebong\b)\s*"""
     )
     private val FILLER = Regex("""(?i)^(?:please |plz |koira |kore |amigo )+""")
     private val WAKE_WORD = Regex("""(?i)\b(?:jarvis)\b[:,]?""")
