@@ -96,7 +96,7 @@ class SettingsFragment : Fragment() {
         binding.tvProfileName.text = userName
         binding.tvProfileSubtitle.text = "JARVIS OPERATOR • PRIMARY USER"
         binding.ivPremiumBadge.visibility =
-            if (com.jarvis.assistant.security.InstallationManager.isPremium(requireContext())) View.VISIBLE else View.GONE
+            if (com.jarvis.assistant.backend.LicenseManager.isPremium(requireContext())) View.VISIBLE else View.GONE
 
         // Owner Voice Profile Status
         val hasVoiceProfile = preferences.hasOwnerVoiceProfile()
