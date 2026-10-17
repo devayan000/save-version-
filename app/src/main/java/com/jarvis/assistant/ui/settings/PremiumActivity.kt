@@ -68,7 +68,7 @@ class PremiumActivity : AppCompatActivity() {
     private fun refreshStatus() {
         val inst = InstallationManager.installationId(this)
         binding.tvStatus.text =
-            if (InstallationManager.isPremium(this)) "PREMIUM ACTIVE\nDevice: " + inst
+            if (LicenseManager.isPremium(this)) "PREMIUM ACTIVE\nDevice: " + inst
             else "Not activated\nDevice: " + inst
     }
 
