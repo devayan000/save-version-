@@ -20,7 +20,7 @@ class TerminalActivity : AppCompatActivity() {
 
         val out = TextView(this).apply {
             textSize = 12f
-            textIsSelectable = true
+            setTextIsSelectable(true)
             setPadding(24, 24, 24, 24)
             text = TerminalManager.historyList().joinToString("\n") { "$ " + it.command + "\n" + it.output + "\n" }
                 .ifBlank { "Jarvis Terminal\nType a shell command and press Run.\n" }
