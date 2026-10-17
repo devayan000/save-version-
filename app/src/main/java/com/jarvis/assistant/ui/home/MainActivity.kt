@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
             }.show()
     }
 
-    private fun toggleLiveScreenShare() {
+    fun toggleLiveScreenShare() {
         if (com.jarvis.assistant.vision.ScreenCaptureManager.getInstance().isSharing.value) {
             JarvisConversationService.stopScreenCapture()
             Toast.makeText(this, "Screen sharing stopped.", Toast.LENGTH_SHORT).show()
