@@ -7,6 +7,7 @@ import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.jarvis.assistant.JarvisApp
+import com.jarvis.assistant.automation.whatsapp.WhatsAppAutoReplyManager
 
 /**
  * Optional notification listener. Only active after the user grants notification access in Android Settings.
@@ -52,6 +53,14 @@ class JarvisNotificationListenerService : NotificationListenerService() {
         val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
         val category = n.category ?: ""
         NotificationBriefingBuilder.addNotification(packageName, title, text, category, sbn.id, sbn.postTime)
+
+        // DEV STYLE — WhatsApp Auto Reply module hook
+        if (packageName in WhatsAppAutoReplyManager.WHATSAPP_PACKAGES) {
+            runCatching {
+                val replyAction = n.actions?.firstOrNull { it.remoteInputs != null && it.remoteInputs.isNotEmpty() }
+                WhatsAppAutoReplyManager.get(applicationContext).handleNotification(title, text, replyAction)
+            }
+        }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
