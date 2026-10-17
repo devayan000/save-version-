@@ -13,7 +13,9 @@ object ToolOrchestrator {
         Tool("unlock_request", "Request Android to show the unlock screen (requires PIN/biometric)", true),
         Tool("memory", "Store or recall user-approved facts", false),
         Tool("github_research", "Search GitHub repositories and inspect README/license so the user can select one (Developer Agent stage 1)", false),
-        Tool("run_shell", "Run a shell command in the Jarvis background terminal (Termux-style) and return its output", true)
+        Tool("run_shell", "Run a shell command in the Jarvis background terminal (Termux-style) and return its output", true),
+        Tool("web_search", "Search the web in the background for fresh information and answer better", false),
+        Tool("photo_memory", "Remember a photo forever with its description, context and OCR text", false)
     )
     fun availableTools(): List<Tool> = registry
     fun describe(input: String): String {
