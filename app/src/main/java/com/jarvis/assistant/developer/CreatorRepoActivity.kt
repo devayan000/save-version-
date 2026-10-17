@@ -52,7 +52,7 @@ class CreatorRepoActivity : AppCompatActivity() {
             setTypeface(typeface, Typeface.BOLD)
             gravity = Gravity.CENTER
         }
-        val hint = TextView(this).apply {
+        val hintText = TextView(this).apply {
             text = "Paste a GitHub repository link. I will read its structure, folders, languages and README, then give you a full analysis. Nothing in the repository is modified."
             textSize = 14f
             setPadding(0, (8 * density).toInt(), 0, 0)
