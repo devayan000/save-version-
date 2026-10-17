@@ -284,21 +284,28 @@ class SettingsFragment : Fragment() {
         val ctx = requireContext()
         val container = android.widget.LinearLayout(ctx).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(48, 32, 48, 16) }
         android.widget.TextView(ctx).apply { text = if (PremiumAccessService.isValidated(ctx)) "Premium: ACTIVE" else "Premium: Not activated"; setPadding(0, 0, 0, 16); container.addView(this) }
-        val endpoint = android.widget.EditText(ctx).apply { hint = "https://your-app.base44.app/functions/validatePremiumKey"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI; setText(PremiumAccessService.getValidationEndpoint(ctx)) }
-        container.addView(endpoint)
-        val key = android.widget.EditText(ctx).apply { hint = "Premium access key"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
+        val name = android.widget.EditText(ctx).apply { hint = "Your name"; inputType = android.text.InputType.TYPE_CLASS_TEXT; setText(PremiumAccessService.getUserName(ctx)) }
+        container.addView(name)
+        val device = android.widget.EditText(ctx).apply { hint = "Device model"; inputType = android.text.InputType.TYPE_CLASS_TEXT; setText(PremiumAccessService.getDeviceModel(ctx)) }
+        container.addView(device)
+        val key = android.widget.EditText(ctx).apply { hint = "Premium access key (AHONA-API-...)"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD }
         container.addView(key)
         MaterialAlertDialogBuilder(ctx).setTitle("Premium Access").setView(android.widget.ScrollView(ctx).apply { addView(container) })
-            .setPositiveButton("Check Key") { _, _ ->
-                val ep = endpoint.text.toString().trim()
+            .setPositiveButton("Activate") { _, _ ->
+                val n = name.text.toString().trim()
+                val d = device.text.toString().trim()
                 val k = key.text.toString().trim()
-                if (ep.isNotBlank()) PremiumAccessService.setValidationEndpoint(ctx, ep)
-                if (k.isBlank()) { Toast.makeText(ctx, "Enter a key first.", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-                Toast.makeText(ctx, "Validating...", Toast.LENGTH_SHORT).show()
+                if (n.isBlank() || d.isBlank()) { Toast.makeText(ctx, "Enter name and device.", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                if (k.isBlank()) { Toast.makeText(ctx, "Enter a key.", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                PremiumAccessService.setUserName(ctx, n)
+                PremiumAccessService.setDeviceModel(ctx, d)
+                Toast.makeText(ctx, "Activating...", Toast.LENGTH_SHORT).show()
                 viewLifecycleOwner.lifecycleScope.launch {
-                    val result = withContext(Dispatchers.IO) { PremiumAccessService.validate(ctx, k) }
+                    val check = withContext(Dispatchers.IO) { PremiumAccessService.checkKey(ctx, k) }
+                    if (!check.valid) { Toast.makeText(ctx, check.message.ifBlank { "Invalid key" }, Toast.LENGTH_LONG).show(); return@launch }
+                    val result = withContext(Dispatchers.IO) { PremiumAccessService.activatePremium(ctx, k) }
                     if (result.valid) Toast.makeText(ctx, "Premium activated! Features: " + result.features.joinToString(", "), Toast.LENGTH_LONG).show()
-                    else { val msg = if (result.isNetworkError) "Network error: " + result.error else result.error; Toast.makeText(ctx, msg ?: "Invalid key", Toast.LENGTH_LONG).show() }
+                    else { val msg = if (result.isNetworkError) "Network error: " + result.error else result.error; Toast.makeText(ctx, msg ?: "Activation failed", Toast.LENGTH_LONG).show() }
                 }
             }
             .setNegativeButton("Get Key (WhatsApp)") { _, _ -> if (!PremiumAccessService.openWhatsAppForKey(ctx)) Toast.makeText(ctx, "WhatsApp not available.", Toast.LENGTH_SHORT).show() }

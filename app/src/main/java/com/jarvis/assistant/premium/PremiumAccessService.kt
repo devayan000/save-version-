@@ -3,33 +3,65 @@ package com.jarvis.assistant.premium
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 
 /**
- * Premium access key validation. Keys are validated on a trusted backend (Base44 function).
- * Never stores secret credentials client-side. The validation endpoint URL is user-configurable.
+ * Premium access via the Ahona API (https://ahona-voice-os.base44.app).
+ * Full flow: user create, key check, premium activate, license activate (device token),
+ * heartbeat, license verify. No client-side secrets. Admin can disable devices remotely.
  */
 object PremiumAccessService {
 
+    private const val DEFAULT_BASE_URL = "https://ahona-voice-os.base44.app"
     private const val WHATSAPP_NUMBER_LOCAL = "01612509753"
     private const val WHATSAPP_COUNTRY_CODE = "880"
     private const val PREFS = "jarvis_premium"
+    private const val KEY_BASE_URL = "premium_base_url"
     private const val KEY_VALIDATED = "premium_validated"
+    private const val KEY_DEVICE_TOKEN = "premium_device_token"
+    private const val KEY_INSTALLATION_ID = "premium_installation_id"
+    private const val KEY_USER_NAME = "premium_user_name"
+    private const val KEY_DEVICE_MODEL = "premium_device_model"
+    private const val KEY_PREMIUM_SINCE = "premium_since"
     private const val KEY_FEATURES = "premium_features"
-    private const val KEY_VALIDATED_AT = "premium_validated_at"
-    private const val KEY_VALIDATION_ENDPOINT = "premium_validation_endpoint"
 
+    data class KeyCheckResult(val valid: Boolean, val message: String, val seatsLeft: Int, val error: String?)
     data class ValidationResult(val valid: Boolean, val features: List<String>, val error: String?, val isNetworkError: Boolean)
 
-    fun setValidationEndpoint(ctx: Context, url: String) {
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(KEY_VALIDATION_ENDPOINT, url.trim()).apply()
+    fun getBaseUrl(ctx: Context): String =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_BASE_URL, DEFAULT_BASE_URL).orEmpty()
+
+    fun setBaseUrl(ctx: Context, url: String) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_BASE_URL, url.trim()).apply()
     }
 
-    fun getValidationEndpoint(ctx: Context): String =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_VALIDATION_ENDPOINT, "").orEmpty()
+    fun getInstallationId(ctx: Context): String {
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        var id = prefs.getString(KEY_INSTALLATION_ID, "").orEmpty()
+        if (id.isBlank()) {
+            id = "inst-" + java.util.UUID.randomUUID().toString().replace("-", "").take(16)
+            prefs.edit().putString(KEY_INSTALLATION_ID, id).apply()
+        }
+        return id
+    }
+
+    fun getUserName(ctx: Context): String =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_USER_NAME, "").orEmpty()
+
+    fun setUserName(ctx: Context, name: String) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_USER_NAME, name.trim()).apply()
+    }
+
+    fun getDeviceModel(ctx: Context): String =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_DEVICE_MODEL, "").orEmpty()
+
+    fun setDeviceModel(ctx: Context, model: String) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_DEVICE_MODEL, model.trim()).apply()
+    }
 
     fun isValidated(ctx: Context): Boolean =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_VALIDATED, false)
@@ -41,58 +73,166 @@ object PremiumAccessService {
 
     fun hasFeature(ctx: Context, feature: String): Boolean = isValidated(ctx) && getFeatures(ctx).any { it.equals(feature, true) }
 
-    fun validate(ctx: Context, key: String): ValidationResult {
-        val endpoint = getValidationEndpoint(ctx)
-        if (endpoint.isBlank()) {
-            return ValidationResult(false, emptyList(), "Set a validation endpoint in Settings first.", false)
+    private fun postJson(urlStr: String, body: JSONObject, token: String? = null): Pair<Int, String> {
+        val url = URL(urlStr)
+        val conn = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 10000
+            readTimeout = 15000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            if (token != null) setRequestProperty("x-ahona-token", token)
         }
+        conn.outputStream.use { it.write(body.toString().toByteArray()) }
+        val code = conn.responseCode
+        val respBody = (conn.inputStream.bufferedReader()?.readText() ?: conn.errorStream?.bufferedReader()?.readText() ?: "")
+        conn.disconnect()
+        return Pair(code, respBody)
+    }
+
+    /** Step 1: Register the app-user card on the Ahona backend. Call once when the app opens. */
+    fun createUser(ctx: Context, name: String, deviceModel: String): Boolean {
+        if (name.isBlank() || deviceModel.isBlank()) return false
+        val base = getBaseUrl(ctx)
+        val body = JSONObject()
+            .put("name", name)
+            .put("device_model", deviceModel)
+            .put("platform", "android")
+            .put("installation_id", getInstallationId(ctx))
         return try {
-            val url = URL(endpoint)
-            val conn = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = 10000
-                readTimeout = 15000
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-            }
-            conn.outputStream.use { it.write(JSONObject().put("key", key.trim()).toString().toByteArray()) }
-            val code = conn.responseCode
-            val body = (conn.inputStream.bufferedReader()?.readText() ?: conn.errorStream?.bufferedReader()?.readText() ?: "")
-            conn.disconnect()
+            val (code, respBody) = postJson("$base/api/user/create", body)
             if (code in 200..299) {
-                val json = JSONObject(body)
-                val valid = json.optBoolean("valid", false)
-                if (valid) {
-                    val features = json.optJSONArray("features")?.let { arr ->
-                        (0 until arr.length()).map { arr.getString(it) }
-                    } ?: listOf("premium")
+                val json = JSONObject(respBody)
+                setUserName(ctx, name)
+                setDeviceModel(ctx, deviceModel)
+                if (json.optBoolean("premium", false)) {
                     ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-                        .putBoolean(KEY_VALIDATED, true)
-                        .putString(KEY_FEATURES, features.joinToString(","))
-                        .putLong(KEY_VALIDATED_AT, System.currentTimeMillis())
-                        .apply()
-                    ValidationResult(true, features, null, false)
-                } else {
-                    ValidationResult(false, emptyList(), json.optString("error", "Invalid key."), false)
+                        .putBoolean(KEY_VALIDATED, true).apply()
                 }
+                true
+            } else false
+        } catch (e: Exception) { false }
+    }
+
+    /** Step 2: Check a key before activating. Returns valid, message and seats left. Nothing is saved. */
+    fun checkKey(ctx: Context, key: String): KeyCheckResult {
+        val base = getBaseUrl(ctx)
+        val body = JSONObject().put("license_key", key.trim())
+        return try {
+            val (code, respBody) = postJson("$base/api/key/check", body)
+            val json = JSONObject(respBody)
+            if (code in 200..299) {
+                KeyCheckResult(
+                    valid = json.optBoolean("valid", false),
+                    message = json.optString("message", ""),
+                    seatsLeft = json.optInt("seats_left", 0),
+                    error = null
+                )
             } else {
-                val json = runCatching { JSONObject(body) }.getOrNull()
-                ValidationResult(false, emptyList(), json?.optString("error") ?: "Server error ($code)", code in 500..599)
+                KeyCheckResult(false, json.optString("message", "Check failed"), 0, json.optString("error"))
             }
         } catch (e: java.net.SocketTimeoutException) {
-            ValidationResult(false, emptyList(), "Network timeout. Check your connection.", true)
-        } catch (e: java.net.UnknownHostException) {
-            ValidationResult(false, emptyList(), "Could not reach the validation server.", true)
+            KeyCheckResult(false, "", 0, "Network timeout")
+        } catch (e: Exception) {
+            KeyCheckResult(false, "", 0, "Network error: " + e.message)
+        }
+    }
+
+    /** Step 3: Activate premium for this name + device. Also activates the license to get a device token. */
+    fun activatePremium(ctx: Context, key: String): ValidationResult {
+        val name = getUserName(ctx)
+        val device = getDeviceModel(ctx)
+        if (name.isBlank() || device.isBlank()) {
+            return ValidationResult(false, emptyList(), "Set your name and device first.", false)
+        }
+        val base = getBaseUrl(ctx)
+        val encodedName = URLEncoder.encode(name, "UTF-8")
+        val encodedDevice = URLEncoder.encode(device, "UTF-8")
+        val encodedKey = URLEncoder.encode(key.trim(), "UTF-8")
+        val urlStr = "$base/api/user/$encodedName/$encodedDevice/premium/$encodedKey"
+        val body = JSONObject()
+            .put("platform", "android")
+            .put("installation_id", getInstallationId(ctx))
+        return try {
+            val (code, respBody) = postJson(urlStr, body)
+            val json = JSONObject(respBody)
+            if (code in 200..299 && json.optBoolean("success", false)) {
+                activateLicense(ctx, key)
+                ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                    .putBoolean(KEY_VALIDATED, true)
+                    .putString(KEY_PREMIUM_SINCE, json.optString("premium_since", ""))
+                    .putString(KEY_FEATURES, "premium,singing,search")
+                    .apply()
+                ValidationResult(true, listOf("premium", "singing", "search"), null, false)
+            } else {
+                ValidationResult(false, emptyList(), json.optString("message", "Activation failed"), false)
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            ValidationResult(false, emptyList(), "Network timeout", true)
         } catch (e: Exception) {
             ValidationResult(false, emptyList(), "Network error: " + e.message, true)
         }
+    }
+
+    /** Step 4: Trade the key for a device token. Stored locally; returned only once by the server. */
+    private fun activateLicense(ctx: Context, key: String): String? {
+        val base = getBaseUrl(ctx)
+        val body = JSONObject()
+            .put("license_key", key.trim())
+            .put("installation_id", getInstallationId(ctx))
+            .put("display_name", getUserName(ctx))
+            .put("device_model", getDeviceModel(ctx))
+            .put("platform", "android")
+        return try {
+            val (code, respBody) = postJson("$base/api/license/activate", body)
+            if (code in 200..299) {
+                val json = JSONObject(respBody)
+                val token = json.optString("device_token", "")
+                if (token.isNotBlank()) {
+                    ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                        .putString(KEY_DEVICE_TOKEN, token).apply()
+                }
+                token.ifBlank { null }
+            } else null
+        } catch (e: Exception) { null }
+    }
+
+    /** Re-check the licence. A 403 USER_DISABLED locks features off. */
+    fun verifyLicense(ctx: Context): Boolean {
+        val token = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_DEVICE_TOKEN, "").orEmpty()
+        if (token.isBlank()) return isValidated(ctx)
+        val base = getBaseUrl(ctx)
+        val body = JSONObject().put("installation_id", getInstallationId(ctx))
+        return try {
+            val (code, _) = postJson("$base/api/license/verify", body, token)
+            if (code == 403) { revoke(ctx); false } else if (code in 200..299) true else isValidated(ctx)
+        } catch (e: Exception) { isValidated(ctx) }
+    }
+
+    /** Heartbeat: keeps the installation alive and carries up to five client errors. */
+    fun sendHeartbeat(ctx: Context, errors: List<String> = emptyList()): Boolean {
+        val token = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_DEVICE_TOKEN, "").orEmpty()
+        if (token.isBlank()) return false
+        val base = getBaseUrl(ctx)
+        val body = JSONObject().put("installation_id", getInstallationId(ctx))
+        if (errors.isNotEmpty()) {
+            val arr = JSONArray()
+            for (err in errors.take(5)) {
+                arr.put(JSONObject().put("title", err.take(100)).put("message", err).put("severity", "error"))
+            }
+            body.put("errors", arr)
+        }
+        return try {
+            val (code, _) = postJson("$base/api/report/heartbeat", body, token)
+            code in 200..299
+        } catch (e: Exception) { false }
     }
 
     fun revoke(ctx: Context) {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean(KEY_VALIDATED, false)
             .putString(KEY_FEATURES, "")
-            .putLong(KEY_VALIDATED_AT, 0)
+            .putString(KEY_DEVICE_TOKEN, "")
             .apply()
     }
 
