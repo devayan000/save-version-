@@ -48,6 +48,14 @@ jobs:
         if: failure()
         run: 'grep -E "e: file|error:|FAILURE" gradle_output.log | head -80 || true'
 
+      - name: Upload gradle log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-output-log
+          path: gradle_output.log
+          if-no-files-found: error
+
       - name: Restore the permanent signing key
         uses: ./.github/actions/jarvis-signing
         with:
