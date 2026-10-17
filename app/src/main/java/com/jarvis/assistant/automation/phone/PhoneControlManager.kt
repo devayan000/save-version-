@@ -878,4 +878,27 @@ class PhoneControlManager(
         }
         return cost[lhs.length]
     }
+
+    // -------------------------------------------------------------
+    // DEV STYLE: Official Android device lock ("lock my phone")
+    // Uses DevicePolicyManager.lockNow(); when Device Administrator
+    // permission is missing it opens Android's official activation screen.
+    // -------------------------------------------------------------
+    fun lockPhone(): String {
+        val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+        val admin = android.content.ComponentName(context, com.jarvis.assistant.security.DeviceLockReceiver::class.java)
+        if (!dpm.isAdminActive(admin)) {
+            val activate = Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+                .putExtra(android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN, admin)
+                .putExtra(
+                    android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                    "JARVIS needs Device Administrator permission to lock the phone with the 'lock my phone' voice command."
+                )
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            runCatching { context.startActivity(activate) }
+            return "Phone lock korar jonno Device Administrator permission lagbe. Android er activation screen khule geche - 'Activate' chape dio, tarpor abar bolo."
+        }
+        dpm.lockNow()
+        return "Phone locked. Unlock korte fingerprint, PIN, pattern ba password use koro."
+    }
 }
