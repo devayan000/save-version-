@@ -1,6 +1,9 @@
 package com.jarvis.assistant.automation.command
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.jarvis.assistant.automation.phone.PhoneControlManager
 import com.jarvis.assistant.automation.whatsapp.WhatsAppAssistant
 import com.jarvis.assistant.automation.youtube.YouTubeAutomationManager
@@ -82,6 +85,30 @@ class CommandExecutor(
             is JarvisCommand.RecallRoutine -> memoryManager.getRoutineResponse()
             is JarvisCommand.Decision -> com.jarvis.assistant.util.DecisionEngine.decide(command.topic)
             is JarvisCommand.GoToBackground -> "Going to background."
+            is JarvisCommand.LockPhone -> phoneManager.lockPhone()
+            is JarvisCommand.ToggleOnGuard -> toggleOnGuard(command.enable)
+        }
+    }
+
+    // DEV STYLE: On-Guard (thief watch) voice control
+    private fun toggleOnGuard(enable: Boolean): String {
+        val app = com.jarvis.assistant.JarvisApp.instance
+        val intent = Intent(app, com.jarvis.assistant.security.ThiefGuardService::class.java)
+        return if (enable) {
+            if (ContextCompat.checkSelfPermission(app, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                val settings = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.fromParts("package", app.packageName, null))
+                settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                app.startActivity(settings)
+                "On-Guard ON korar age Camera permission dorkar. Settings khulechi - Jarvis app er Camera permission allow koro, tarpor abar bolo."
+            } else {
+                app.preferences.isThiefGuardEnabled = true
+                ContextCompat.startForegroundService(app, intent)
+                "On-Guard mode ON. Phone table-e rakhle goruche keu tulle quiet-bhabhe photo nibe, tumi phire asle ami janabo."
+            }
+        } else {
+            app.preferences.isThiefGuardEnabled = false
+            app.stopService(intent)
+            "On-Guard mode OFF."
         }
     }
 }
