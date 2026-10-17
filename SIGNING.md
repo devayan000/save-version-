@@ -13,4 +13,4 @@ Keep an offline backup of the original key. Do not commit the keystore or passwo
 
 The previous workflows generated fresh debug keys on ephemeral runners and did not retain them. A signing private key cannot be recovered from an APK or its public certificate. Updating an already-installed copy without uninstalling requires its actual original signing key. If that key is lost, this cannot retroactively fix compatibility with that copy; choose a single permanent publisher key going forward, with a one-time reinstall only if necessary.
 
-Native compile/resource/unit-test tasks run before signing setup. No installable APK will be published until the original signing inputs are supplied. Application ID stays com.jarvis.assistant; version is 1.9.1, build 145.
+Native compile/resource/unit-test tasks run before signing setup. No installable APK will be published until the original signing inputs are supplied. Application ID stays com.jarvis.assistant; version is 2.0.0, build 146.

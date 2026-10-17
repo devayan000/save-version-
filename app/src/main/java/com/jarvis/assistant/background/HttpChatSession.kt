@@ -86,7 +86,7 @@ class HttpChatSession(
                         unlock.isUnlockCommand(text) -> unlock.requestUnlock(context)
                         question in identityQuestions -> if (EndpointConfig.speechLocale(language, text).language == "bn") com.jarvis.assistant.security.OwnerProfile.IDENTITY_ANSWER_BN
                             else com.jarvis.assistant.security.OwnerProfile.IDENTITY_ANSWER_EN
-                        else -> client.ask(endpoint, prompt, apiKey, model)
+                        else -> com.jarvis.assistant.agent.AgentEngine.process(text, prompt, endpoint, apiKey, model, context)
                     }
                     onReply(displayText, reply)
                     onState(ConversationState.SPEAKING)

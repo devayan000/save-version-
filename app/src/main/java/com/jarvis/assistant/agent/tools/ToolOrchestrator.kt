@@ -1,0 +1,23 @@
+package com.jarvis.assistant.agent.tools
+
+/** Tool orchestration. Describes available tools so the agent can reference them. Actual invocation stays in existing UI-bound services. */
+object ToolOrchestrator {
+    data class Tool(val name: String, val description: String, val requiresPermission: Boolean)
+    private val registry = listOf(
+        Tool("screen_vision", "Analyze what is on the screen (existing Screen Vision)", true),
+        Tool("screenshot", "Capture a screenshot of the current screen", true),
+        Tool("screen_record", "Record the screen silently (no microphone audio)", true),
+        Tool("voice_input", "Listen to the user's voice and transcribe it", false),
+        Tool("text_to_speech", "Speak a reply aloud using Android TTS", false),
+        Tool("standby", "Enter low-power standby mode with offline wake-word detection", false),
+        Tool("unlock_request", "Request Android to show the unlock screen (requires PIN/biometric)", true),
+        Tool("memory", "Store or recall user-approved facts", false)
+    )
+    fun availableTools(): List<Tool> = registry
+    fun describe(input: String): String {
+        val lower = input.lowercase()
+        val relevant = registry.filter { tool -> lower.contains(tool.name) || lower.contains(tool.name.replace("_", " ")) }
+        return if (relevant.isEmpty()) "" else "Available tools the user may invoke: " + relevant.joinToString(", ") { it.name } + ". "
+    }
+    fun requiresPermission(toolName: String): Boolean = registry.firstOrNull { it.name == toolName }?.requiresPermission ?: false
+}
