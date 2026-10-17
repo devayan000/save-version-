@@ -110,7 +110,7 @@ object AgentEngine {
                 expected = "Complete the task the user asked for",
                 actual = "Jarvis replied it could not do it: " + reply.take(200),
                 errorType = BugDetectionService.ErrorType.UNKNOWN,
-                errorMessage = "Assistant reported inability for request: " + userInput.take(150),
+                errorMessage = "Assistant reported inability for request: " + request.take(150),
                 rootCause = "Requested capability is missing, blocked, or lacks permission/context",
                 suggestedFix = "Review the request, add or fix the missing capability, then re-test",
                 severity = BugDetectionService.Severity.MEDIUM
