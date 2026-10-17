@@ -46,7 +46,7 @@ jobs:
 
       - name: Show Kotlin compile errors
         if: failure()
-        run: grep -E "e: file|error:|FAILURE" gradle_output.log | head -80 || true
+        run: 'grep -E "e: file|error:|FAILURE" gradle_output.log | head -80 || true'
 
       - name: Restore the permanent signing key
         uses: ./.github/actions/jarvis-signing
