@@ -35,7 +35,7 @@ object LocalContentProcessor {
         }
         val selected = if (points.isEmpty()) sentences.take(3) else points.take(8)
         if (selected.isEmpty()) return "No key points detected."
-        return selected.mapIndexed { i, s -> (i + 1) + ". " + s.trim() }.joinToString("\n")
+        return selected.mapIndexed { i, s -> (i + 1).toString() + ". " + s.trim() }.joinToString("\n")
     }
 
     private fun splitSentences(text: String): List<String> =

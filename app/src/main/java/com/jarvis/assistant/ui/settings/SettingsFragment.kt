@@ -228,7 +228,7 @@ class SettingsFragment : Fragment() {
                         7 -> showSearchSettingsDialog()
                         8 -> startActivity(Intent(requireContext(), ShareReceiverActivity::class.java))
                         9 -> startActivity(Intent(requireContext(), NotificationBriefingActivity::class.java))
-                        10 -> { if (checkSelfPermission(android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) requestCameraLauncher.launch(android.Manifest.permission.CAMERA) else startActivity(Intent(requireContext(), ScannerActivity::class.java)) }
+                        10 -> { if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) requestCameraLauncher.launch(android.Manifest.permission.CAMERA) else startActivity(Intent(requireContext(), ScannerActivity::class.java)) }
                         11 -> startActivity(Intent(requireContext(), BatteryActivity::class.java))
                         12 -> startActivity(Intent(requireContext(), MediaLibraryActivity::class.java))
                         13 -> startActivity(Intent(requireContext(), ScreenContextActivity::class.java))
