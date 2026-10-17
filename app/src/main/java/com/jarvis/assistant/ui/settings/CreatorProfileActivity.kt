@@ -26,6 +26,29 @@ class CreatorProfileActivity : AppCompatActivity() {
         setContentView(binding.root)
         ThemeManager.applyDynamicBackground(binding.root)
 
+        // DEV STYLE: creator-only repository analyzer (visible only with the creator key)
+        if (CreatorAuthenticationService.isCreator(this)) {
+            val scroll = (0 until binding.root.childCount)
+                .map { binding.root.getChildAt(it) }
+                .filterIsInstance<android.widget.ScrollView>()
+                .firstOrNull()
+            val column = scroll?.getChildAt(0) as? android.widget.LinearLayout
+            if (column != null) {
+                val analyzerButton = MaterialButton(this)
+                analyzerButton.text = "REPOSITORY ANALYZER - paste a GitHub link, I analyze the full code"
+                analyzerButton.isAllCaps = true
+                analyzerButton.setOnClickListener {
+                    startActivity(Intent(this, com.jarvis.assistant.developer.CreatorRepoActivity::class.java))
+                }
+                val lp = android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                lp.topMargin = (20 * resources.displayMetrics.density).toInt()
+                column.addView(analyzerButton, 0, lp)
+            }
+        }
+
         binding.tvCreatorName.text = OwnerProfile.CREATOR_NAME
         binding.tvCreatorAlias.text = "${OwnerProfile.CREATOR_ALIAS} • ${OwnerProfile.BRAND}"
         binding.tvCreatorTagline.text =
