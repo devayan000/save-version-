@@ -106,7 +106,7 @@ object AgentEngine {
             BugDetectionService.report(
                 ctx = context,
                 feature = "Task Fulfillment",
-                command = userInput.take(200),
+                command = request.take(200),
                 expected = "Complete the task the user asked for",
                 actual = "Jarvis replied it could not do it: " + reply.take(200),
                 errorType = BugDetectionService.ErrorType.UNKNOWN,
