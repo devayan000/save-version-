@@ -275,6 +275,11 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_THIEF_GUARD, false)
         set(value) = prefs.edit().putBoolean(KEY_THIEF_GUARD, value).apply()
 
+    // DEV STYLE: unseen On-Guard captures - reported to the owner when they return
+    var thiefGuardUnseenCaptures: Int
+        get() = prefs.getInt("key_thief_guard_unseen", 0)
+        set(value) = prefs.edit().putInt("key_thief_guard_unseen", value).apply()
+
     // DEV STYLE: developer vault — GitHub / Vercel / email automation access
     var githubToken: String
         get() = (prefs.getString(KEY_GITHUB_TOKEN, "") ?: "").trim()
