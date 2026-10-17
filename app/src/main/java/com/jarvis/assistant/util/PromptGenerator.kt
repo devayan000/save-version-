@@ -55,7 +55,12 @@ object PromptGenerator {
 - Maintain this language strictly for the entire conversation!
 """.trimIndent()
         } else {
-            ""
+            // DEV STYLE: Hindi is the default assistant language when no preference is set.
+            """
+[DEFAULT SPOKEN LANGUAGE - HINDI]:
+- Respond in Hindi (हिंदी) by default in a natural, warm, spoken style (e.g. 'हाँजी सर, मैं अभी आपके लिए यह कर देता हूँ').
+- Switch language only if the user clearly speaks another language.
+""".trimIndent()
         }
 
         val personalityInstruction = when (personality) {
