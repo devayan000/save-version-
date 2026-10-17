@@ -12,6 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import com.jarvis.assistant.JarvisApp
 import com.jarvis.assistant.R
+import com.jarvis.assistant.network.EndpointConfig
+import com.jarvis.assistant.network.HttpChatClient
 import com.jarvis.assistant.data.model.GeminiConstants
 import com.jarvis.assistant.databinding.ActivityApiConnectionBinding
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +53,7 @@ class ApiConnectionActivity : AppCompatActivity() {
     private fun loadCurrentPreferences() {
         binding.etApiKey.setText(preferences.apiKey)
         binding.etCustomEndpoint.setText(preferences.customEndpoint)
+        binding.etCustomChatModel.setText(preferences.customChatModel)
 
         if (!preferences.canStoreApiKeySecurely) {
             binding.tvLiveStatus.text = "SECURE STORAGE UNAVAILABLE • API KEY DISABLED"
@@ -76,6 +79,12 @@ class ApiConnectionActivity : AppCompatActivity() {
         if (preferences.customEndpoint.isNotBlank()) {
             binding.tvEndpointSummary.text = "Active Endpoint: ${preferences.customEndpoint}"
         }
+        if (EndpointConfig.httpEndpoint(preferences.apiKey, preferences.customEndpoint) != null) {
+            binding.tvLiveStatus.text = "PERSONAL HTTPS ENDPOINT CONFIGURED"
+            binding.tvEndpointSummary.text = "Personal endpoint: " + preferences.customEndpoint
+        } else if (preferences.apiKey.isBlank()) {
+            binding.tvEndpointSummary.text = "No default API. Add your own endpoint or Gemini key."
+        }
     }
 
     private fun setupListeners() {
@@ -97,11 +106,15 @@ class ApiConnectionActivity : AppCompatActivity() {
 
         binding.btnTestConnection.setOnClickListener {
             val enteredKey = binding.etApiKey.text?.toString()?.trim() ?: ""
-            if (enteredKey.isBlank()) {
-                Snackbar.make(binding.root, "Please enter an API key first", Snackbar.LENGTH_LONG).show()
+            val configured = binding.etCustomEndpoint.text?.toString()?.trim().orEmpty()
+            val error = EndpointConfig.validationError(configured)
+            if (error != null) { Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show(); return@setOnClickListener }
+            val endpoint = EndpointConfig.httpEndpoint(enteredKey, configured)
+            if (enteredKey.isBlank() && endpoint == null) {
+                Snackbar.make(binding.root, "Add your own endpoint or Gemini key first.", Snackbar.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            testConnection(enteredKey)
+            testConnection(enteredKey, endpoint)
         }
 
         binding.btnSaveConnection.setOnClickListener {
@@ -109,7 +122,8 @@ class ApiConnectionActivity : AppCompatActivity() {
         }
     }
 
-    private fun testConnection(apiKey: String) {
+    private fun testConnection(apiKey: String, endpoint: String?) {
+        val customModel = binding.etCustomChatModel.text?.toString()?.trim().orEmpty()
         binding.btnTestConnection.isEnabled = false
         binding.tvPingResult.text = "Testing ping..."
         binding.viewStatusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#3B82F6"))
@@ -118,6 +132,10 @@ class ApiConnectionActivity : AppCompatActivity() {
             val startTime = System.currentTimeMillis()
             val result = withContext(Dispatchers.IO) {
                 try {
+                    if (endpoint != null) {
+                        HttpChatClient().ask(endpoint, "Reply only with OK.", apiKey, customModel)
+                        Pair(true, System.currentTimeMillis() - startTime)
+                    } else {
                     val url = "https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey"
                     val request = Request.Builder().url(url).build()
                     testHttpClient.newCall(request).execute().use { response ->
@@ -127,6 +145,7 @@ class ApiConnectionActivity : AppCompatActivity() {
                         } else {
                             Pair(false, response.code)
                         }
+                    }
                     }
                 } catch (e: Exception) {
                     Pair(false, -1)
@@ -145,7 +164,7 @@ class ApiConnectionActivity : AppCompatActivity() {
                 binding.tvPingResult.text = if (code == -1) "Network Timeout" else "HTTP $code Error"
                 binding.tvLiveStatus.text = "FAILED • INVALID KEY OR NETWORK"
                 binding.viewStatusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EF4444"))
-                Snackbar.make(binding.root, "Connection failed. Please verify API key.", Snackbar.LENGTH_LONG).show()
+                Snackbar.make(binding.root, "Connection failed. Check the endpoint, request format, model and personal key.", Snackbar.LENGTH_LONG).show()
             }
         }
     }
@@ -153,6 +172,8 @@ class ApiConnectionActivity : AppCompatActivity() {
     private fun saveAndApply() {
         val key = binding.etApiKey.text?.toString()?.trim() ?: ""
         val customEp = binding.etCustomEndpoint.text?.toString()?.trim() ?: ""
+        val error = EndpointConfig.validationError(customEp)
+        if (error != null) { Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show(); return }
 
         val selectedModel = when (binding.rgModelGroup.checkedRadioButtonId) {
             binding.rbModelFlash20.id -> GeminiConstants.MODEL_3_8_LIVE
@@ -161,13 +182,14 @@ class ApiConnectionActivity : AppCompatActivity() {
         }
 
         try {
-            preferences.apiKey = key
+            if (key.isNotBlank() || preferences.canStoreApiKeySecurely) preferences.apiKey = key
         } catch (e: IllegalStateException) {
             Snackbar.make(binding.root, e.message ?: "Secure key storage is unavailable.", Snackbar.LENGTH_LONG).show()
             return
         }
         preferences.aiModel = selectedModel
         preferences.customEndpoint = customEp
+        preferences.customChatModel = binding.etCustomChatModel.text?.toString()?.trim().orEmpty()
         com.jarvis.assistant.background.JarvisConversationService.clearLiveError()
         com.jarvis.assistant.background.JarvisConversationService.restartSession()
 

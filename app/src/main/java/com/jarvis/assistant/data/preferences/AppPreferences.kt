@@ -241,6 +241,27 @@ class AppPreferences(context: Context) {
         get() = (prefs.getString(KEY_WAKE_WORD, "") ?: "").trim()
         set(value) = prefs.edit().putString(KEY_WAKE_WORD, value.trim()).apply()
 
+    // DEV STYLE: Creator verification — a secret phrase that lets Jarvis recognize its creator.
+    var creatorSecretPhrase: String
+        get() = prefs.getString("key_creator_secret_phrase", "") ?: ""
+        set(value) = prefs.edit().putString("key_creator_secret_phrase", value.trim()).apply()
+
+    var creatorName: String
+        get() = prefs.getString("key_creator_name", "") ?: ""
+        set(value) = prefs.edit().putString("key_creator_name", value.trim()).apply()
+
+    var creatorEmail: String
+        get() = prefs.getString("key_creator_email", "") ?: ""
+        set(value) = prefs.edit().putString("key_creator_email", value.trim()).apply()
+
+    // A phone credential must never be stored by Jarvis.
+    fun clearLegacyUnlockCredential() { prefs.edit().remove("key_unlock_pin").apply() }
+
+    // User-configured URL that serves JSON: {versionCode, versionName, downloadUrl, changelog}.
+    var updateCheckUrl: String
+        get() = prefs.getString("key_update_check_url", "") ?: ""
+        set(value) = prefs.edit().putString("key_update_check_url", value.trim()).apply()
+
     // DEV STYLE: On-Guard mode — lift detection + intruder selfie
     var isThiefGuardEnabled: Boolean
         get() = prefs.getBoolean(KEY_THIEF_GUARD, false)
@@ -328,8 +349,12 @@ class AppPreferences(context: Context) {
         set(value) = prefs.edit().putFloat(KEY_ORB_HUE, value).apply()
 
     var customEndpoint: String
-        get() = prefs.getString(KEY_CUSTOM_ENDPOINT, "") ?: ""
+        get() = prefs.getString(KEY_CUSTOM_ENDPOINT, "")?.trim().orEmpty()
         set(value) = prefs.edit().putString(KEY_CUSTOM_ENDPOINT, value.trim()).apply()
+
+    var customChatModel: String
+        get() = prefs.getString("custom_chat_model", "").orEmpty()
+        set(value) = prefs.edit().putString("custom_chat_model", value.trim()).apply()
 
     var userBirthday: String
         get() = prefs.getString(KEY_USER_BIRTHDAY, "") ?: ""

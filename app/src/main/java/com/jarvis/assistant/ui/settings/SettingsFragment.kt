@@ -20,6 +20,10 @@ import com.jarvis.assistant.databinding.FragmentSettingsBinding
 import com.jarvis.assistant.ui.memory.MemoryActivity
 import com.jarvis.assistant.ui.permission.PermissionActivity
 import com.jarvis.assistant.ui.voice.VoiceEnrollmentActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsFragment : Fragment() {
 
@@ -199,6 +203,7 @@ class SettingsFragment : Fragment() {
                 .setTitle("JARVIS App Identity")
                 .setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext()))
                 .setPositiveButton("Close", null)
+                .setNeutralButton("Check for Updates") { _, _ -> showUpdateDialog() }
                 .show()
         }
 
@@ -215,6 +220,46 @@ class SettingsFragment : Fragment() {
 
         binding.tvFooterCredit.setOnClickListener {
             openUrl("https://t.me/DevStyleHQ")
+        }
+    }
+
+    private fun showUpdateDialog() {
+        val ctx = requireContext()
+        val container = android.widget.LinearLayout(ctx).apply { orientation = android.widget.LinearLayout.VERTICAL; setPadding(48, 32, 48, 16) }
+        android.widget.TextView(ctx).apply {
+            text = "Current: v" + com.jarvis.assistant.update.UpdateManager.currentVersionName() + " (build " + com.jarvis.assistant.update.UpdateManager.currentVersionCode() + ")\n\nSet your update URL. The APK must be signed with the same key as the installed app, or Android will ask you to uninstall first."
+            setPadding(0, 0, 0, 24)
+            container.addView(this)
+        }
+        val url = android.widget.EditText(ctx).apply { hint = "Update URL (HTTPS JSON: versionCode, versionName, downloadUrl)"; inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI; setText(preferences.updateCheckUrl) }
+        container.addView(url)
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle("App Updates")
+            .setView(android.widget.ScrollView(ctx).apply { addView(container) })
+            .setPositiveButton("Check Now") { _, _ -> preferences.updateCheckUrl = url.text.toString().trim(); checkForUpdates() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun checkForUpdates() {
+        val url = preferences.updateCheckUrl
+        if (url.isBlank()) { Toast.makeText(requireContext(), "Set an update URL first.", Toast.LENGTH_LONG).show(); return }
+        Toast.makeText(requireContext(), "Checking for updates...", Toast.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val info = withContext(Dispatchers.IO) { com.jarvis.assistant.update.UpdateManager.checkForUpdate(url) }
+            if (info == null) { Toast.makeText(requireContext(), "No update available or check failed.", Toast.LENGTH_LONG).show(); return@launch }
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Update " + info.versionName + " available")
+                .setMessage(info.changelog.ifBlank { "A newer version is available. Download and install?" })
+                .setPositiveButton("Download & Install") { _, _ ->
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val file = withContext(Dispatchers.IO) { com.jarvis.assistant.update.UpdateManager.downloadApk(info.downloadUrl) { } }
+                        if (file != null) com.jarvis.assistant.update.UpdateManager.installApk(requireActivity(), file)
+                        else Toast.makeText(requireContext(), "Download failed.", Toast.LENGTH_LONG).show()
+                    }
+                }
+                .setNegativeButton("Later", null)
+                .show()
         }
     }
 

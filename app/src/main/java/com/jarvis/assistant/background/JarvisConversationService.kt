@@ -148,12 +148,14 @@ class JarvisConversationService : Service() {
 
         fun setMicMuted(muted: Boolean) {
             activeInstance?.audioRecorder?.setMuted(muted)
+            activeInstance?.let { service -> service.serviceScope.launch(Dispatchers.Main.immediate) { service.httpSession?.setMuted(muted) } }
         }
 
         fun interruptPlayback() {
             activeInstance?.let { service ->
                 if (_conversationState.value == ConversationState.SPEAKING) {
                     Log.i("JarvisService", "Manual interruption: stopping audio playback")
+                    service.serviceScope.launch(Dispatchers.Main.immediate) { service.httpSession?.interrupt() }
                     service.audioPlayer?.flush()
                     _conversationState.value = ConversationState.LISTENING
                 }
@@ -163,13 +165,15 @@ class JarvisConversationService : Service() {
         // Premium speech pause/resume: buffers mid-sentence and resumes from the same point.
         fun pausePlayback() {
             activeInstance?.audioPlayer?.pause()
+            activeInstance?.let { service -> service.serviceScope.launch(Dispatchers.Main.immediate) { service.httpSession?.pauseSpeech() } }
         }
 
         fun resumePlayback() {
             activeInstance?.audioPlayer?.resume()
+            activeInstance?.let { service -> service.serviceScope.launch(Dispatchers.Main.immediate) { service.httpSession?.resumeSpeech() } }
         }
 
-        fun isSpeechPaused(): Boolean = activeInstance?.audioPlayer?.isPaused() == true
+        fun isSpeechPaused(): Boolean = activeInstance?.let { it.httpSession?.isSpeechPaused ?: (it.audioPlayer?.isPaused() == true) } ?: false
 
         fun restartSession() {
             activeInstance?.let { service ->
@@ -237,6 +241,10 @@ class JarvisConversationService : Service() {
 
         fun sendTextMessage(text: String) {
             val instance = activeInstance
+            if (instance?.httpSession != null) {
+                instance.serviceScope.launch(Dispatchers.Main.immediate) { instance.httpSession?.sendText(text) }
+                return
+            }
             val ws = instance?.liveWebSocket
             if (ws == null || !ws.isSessionReady()) {
                 pendingTextMessages.add(text)
@@ -246,6 +254,8 @@ class JarvisConversationService : Service() {
                         val intent = Intent(ctx, JarvisConversationService::class.java).setAction(ACTION_START_CONVERSATION)
                         ctx.startForegroundService(intent)
                     }
+                } else if (!_isSessionOn.value && com.jarvis.assistant.network.EndpointConfig.httpEndpoint(instance.preferences.apiKey, instance.preferences.customEndpoint) != null) {
+                    instance.serviceScope.launch(Dispatchers.Main.immediate) { instance.beginActiveConversation() }
                 }
                 return
             }
@@ -256,6 +266,11 @@ class JarvisConversationService : Service() {
         // DEV STYLE: chat image attachment — stream one photo into the live session
         fun sendImageMessage(base64Jpeg: String, caption: String) {
             val instance = activeInstance
+            val prefs = JarvisApp.instance.preferences
+            if (com.jarvis.assistant.network.EndpointConfig.httpEndpoint(prefs.apiKey, prefs.customEndpoint) != null) {
+                instance?.serviceScope?.launch { _events.emit("This custom HTTPS chat supports text and voice, not image understanding. Screen tools save captures separately.") }
+                return
+            }
             val ws = instance?.liveWebSocket
             if (ws == null || !ws.isSessionReady()) {
                 pendingTextMessages.add(caption)
@@ -289,6 +304,7 @@ class JarvisConversationService : Service() {
     private var audioRecorder: AudioRecorder? = null
     private var audioPlayer: AudioPlayer? = null
     private var liveWebSocket: GeminiLiveWebSocket? = null
+    @Volatile private var httpSession: HttpChatSession? = null
     private var inactivityJob: Job? = null
     private val currentTurnAssistantText = StringBuilder()
     private val currentTurnUserText = StringBuilder()
@@ -823,14 +839,14 @@ class JarvisConversationService : Service() {
         val app = application as JarvisApp
         val preferences = app.preferences
         val apiKey = preferences.apiKey.trim()
-        if (apiKey.isBlank()) {
+        if (apiKey.isBlank() && com.jarvis.assistant.network.EndpointConfig.httpEndpoint(apiKey, preferences.customEndpoint) == null) {
             _liveError.value = JarvisLiveError(
                 title = "API KEY MISSING",
-                message = "No Gemini API Key configured. Please enter your API Key in Settings to activate Jarvis.",
+                message = "No default API is provided. Add your own Gemini key or HTTPS endpoint in Settings.",
                 errorCode = "API_KEY_MISSING",
                 actionText = "OPEN SETTINGS"
             )
-            serviceScope.launch { _events.emit("Please configure your Gemini API Key in Settings first.") }
+            serviceScope.launch { _events.emit("সেটিংস থেকে নিজের API দিন। सेटिंग्स से अपना API जोड़ें। Configure your own API in Settings.") }
             fullStop()
             return
         }
@@ -866,6 +882,12 @@ class JarvisConversationService : Service() {
         setConversationState(ConversationState.IDLE)
         updateNotification()
         headsetAudioRouter?.start()
+
+        val httpEndpoint = com.jarvis.assistant.network.EndpointConfig.httpEndpoint(apiKey, preferences.customEndpoint)
+        if (httpEndpoint != null) {
+            startHttpConversation(httpEndpoint)
+            return
+        }
 
         audioPlayer = AudioPlayer(
             onPlaybackStateChanged = { isPlaying ->
@@ -2718,6 +2740,23 @@ class JarvisConversationService : Service() {
         val cleanSpeech = userSpeech.trim()
         if (cleanSpeech.isBlank()) return
 
+        // Creator verification: recognize the saved secret phrase as the creator (Ayan Sir).
+        run {
+            val verifier = com.jarvis.assistant.security.CreatorVerifier
+            if (verifier.isCreatorPhrase(cleanSpeech)) {
+                announce("Hello " + (verifier.creatorName.ifBlank { "Ayan Sir" }) + "! You are my creator. I am fully at your service.")
+                return
+            }
+        }
+        // Voice unlock command.
+        run {
+            val unlock = com.jarvis.assistant.security.UnlockManager
+            if (unlock.isUnlockCommand(cleanSpeech)) {
+                announce(unlock.requestUnlock(this))
+                return
+            }
+        }
+
         if (cleanSpeech.lowercase(Locale.ROOT).matches(Regex(".*\\b(stop|cancel task|cancel automation|bas karo|ruk jao)\\b.*"))) {
             com.jarvis.assistant.automation.agent.AgentTaskEngine.requestCancellation()
             autonomousLoopJob?.cancel()
@@ -3048,12 +3087,58 @@ class JarvisConversationService : Service() {
         synchronized(currentUtteranceAudioStream) { currentUtteranceAudioStream.reset() }
     }
 
+    private fun startHttpConversation(endpoint: String) {
+        serviceScope.launch(Dispatchers.Main.immediate) {
+            if (!_isSessionOn.value) return@launch
+            lateinit var session: HttpChatSession
+            session = HttpChatSession(
+                context = this@JarvisConversationService, parentScope = serviceScope,
+                endpoint = endpoint, apiKey = preferences.apiKey, model = preferences.customChatModel,
+                language = preferences.language,
+                allowVoice = !preferences.isOwnerVoiceEnabled || !preferences.hasOwnerVoiceProfile(),
+                onStandby = { text ->
+                    if (isExplicitStandbyCommand(text)) {
+                        minimizeToHomeScreen()
+                        enterStandby(announce = false)
+                        true
+                    } else false
+                },
+                onState = { state -> if (httpSession === session && _isSessionOn.value) setConversationState(state) },
+                onUser = { text -> if (httpSession === session && _isSessionOn.value) {
+                    lastUserSpeechDetectedTime = System.currentTimeMillis()
+                    idleCheckinDone = false
+                    _liveUserTranscript.value = text
+                    _liveAssistantResponse.value = ""
+                    _liveError.value = null
+                } },
+                onReply = { user, reply -> if (httpSession === session && _isSessionOn.value) {
+                    _liveAssistantResponse.value = reply
+                    (application as JarvisApp).chatRepository.addTurn(user, reply)
+                } },
+                onLevel = { level -> if (httpSession === session && _isSessionOn.value) _audioLevel.value = level },
+                onError = { message -> if (httpSession === session && _isSessionOn.value) serviceScope.launch { _events.emit(message) } }
+            )
+            httpSession = session
+            _connectionStatus.value = "HTTP READY"
+            _liveError.value = null
+            updateNotification()
+            session.start(preferences.isMicMuted)
+            while (!pendingTextMessages.isEmpty()) session.sendText(pendingTextMessages.poll() ?: break)
+        }
+    }
+
     private fun stopActiveConversation() {
         inactivityJob?.cancel()
         inactivityJob = null
         cancelAllActiveTools()
         com.jarvis.assistant.automation.agent.AgentTaskEngine.resetForSession()
         _isSessionOn.value = false
+        val stoppedHttpSession = httpSession
+        httpSession = null
+        if (stoppedHttpSession != null) {
+            if (Looper.myLooper() == Looper.getMainLooper()) stoppedHttpSession.close()
+            else Handler(Looper.getMainLooper()).post { stoppedHttpSession.close() }
+        }
         finalizeTurn()
 
 
@@ -3482,6 +3567,7 @@ class JarvisConversationService : Service() {
         val patterns = listOf(
             "go to background", "go background", "go in background", "go in the background",
             "background me jao", "background mein jao", "send to background", "move to background",
+            "jarvis background e jao", "background e jao", "ব্যাকগ্রাউন্ডে যাও", "জার্ভিস ব্যাকগ্রাউন্ডে যাও",
             "minimize", "go home", "go to home", "go to home screen",
             "go to sleep", "sleep jarvis", "enter standby", "standby mode", "go to standby",
             "take a break", "so jao"

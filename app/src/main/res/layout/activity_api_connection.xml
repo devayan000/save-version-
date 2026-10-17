@@ -124,7 +124,7 @@
                     android:id="@+id/tvEndpointSummary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="wss://generativelanguage.googleapis.com (Gemini 2.0 Live Protocol)"
+                    android:text="No default API. Configure your own key or endpoint."
                     android:textColor="?attr/themeTextMuted"
                     android:textSize="12sp"
                     android:fontFamily="sans-serif"
@@ -313,7 +313,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Custom Endpoint (Optional)"
+                android:text="Your HTTPS Endpoint / WSS Relay"
                 android:textColor="?attr/themeTextMuted"
                 android:textSize="13sp"
                 android:fontFamily="sans-serif-medium"
@@ -340,7 +340,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Override standard Google endpoint with your proxy or relay (leave empty for default)"
+                    android:text="GET: include {prompt} or a prompt query. Otherwise HTTPS uses OpenAI-compatible POST. No default API or shared key is supplied."
                     android:textColor="?attr/themeTextMuted"
                     android:textSize="12sp"
                     android:fontFamily="sans-serif"
@@ -361,12 +361,21 @@
                         android:id="@+id/etCustomEndpoint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="wss://your-gateway.com/live"
+                        android:hint="https://your-provider.example/chat?prompt={prompt}"
                         android:inputType="textUri"
                         android:textColor="?attr/themeTextPrimary"
                         android:textSize="14sp"
                         android:fontFamily="sans-serif" />
                 </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etCustomChatModel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="HTTPS model (if your provider requires one)"
+                    android:inputType="text"
+                    android:textColor="?attr/themeTextPrimary"
+                    android:textSize="14sp" />
             </LinearLayout>
 
         </LinearLayout>
