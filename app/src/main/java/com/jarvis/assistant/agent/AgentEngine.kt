@@ -26,6 +26,8 @@ object AgentEngine {
         if (!FeatureFlags.engineEnabled) return HttpChatClient().ask(endpoint, basePrompt, apiKey, model)
 
         val sb = StringBuilder(basePrompt)
+        // DEV STYLE: Hindi-first language, no-nonsense replies and full app knowledge - always on.
+        sb.append(coreSystemBlock())
 
         // DEV STYLE: high-risk actions always ask the owner for permission first.
         val risk = PermissionGate.riskCheck(userInput)
@@ -94,6 +96,17 @@ object AgentEngine {
             if (gate.level == PermissionGate.Level.BLOCKED) return gate.message
         }
 
+        // DEV STYLE: background terminal - Jarvis runs shell/package commands silently
+        // (no terminal UI) and answers with the real output, like a headless shell.
+        parseShellCommand(request)?.let { cmd ->
+            val result = withContext(Dispatchers.IO) {
+                com.jarvis.assistant.terminal.TerminalManager.runSuspend(cmd)
+            }
+            val header = if (result.exitCode == 0) "✅ बैकग्राउंड कमांड सफलता से चल गई, सर।"
+                else "⚠️ कमांड exit code ${result.exitCode} के साथ खत्म हुई, सर।"
+            return "$header\n$ ${result.command}\n${result.output.take(3000)}"
+        }
+
         val enhancedPrompt = sb.toString()
 
         val reply = if (FeatureFlags.isEnabled(FeatureFlags.errorRecovery))
@@ -146,6 +159,40 @@ object AgentEngine {
         if (lower.endsWith("?")) return true
         val starters = listOf("what ", "who ", "when ", "where ", "why ", "how ", "which ", "ki ", "kivabe", "kothay", "keno", "kemon")
         return starters.any { lower.startsWith(it) }
+    }
+
+    /** DEV STYLE: Hindi-first language rule + anti-nonsense rule + full app feature knowledge. */
+    private fun coreSystemBlock(): String = """
+
+[LANGUAGE + BEHAVIOUR RULES - HIGHEST PRIORITY]:
+1. Reply in Hindi (हिंदी, Devanagari) by default. Use another language only when the user writes in it.
+2. Never reply nonsense, off-topic filler or generic excuses. Always answer exactly what was asked.
+3. You are JARVIS running on the user's Android app. You KNOW the app features and how they work:
+- Voice + text chat: tap the avatar on Home to talk, type in the Chat tab; images and files can be attached in chat.
+- Background terminal: Jarvis runs shell/package commands silently (python, node, pip, npm, apt/pkg, git, curl, ls...) and returns real output - no terminal window needed.
+- WhatsApp: auto-reply rules and WhatsApp assistant commands.
+- Google Workspace: connect once from Chat > Google Workspace, then Gmail/Calendar/Drive work.
+- Memory: Home > Saved memories; owner voice enrollment; photo memory.
+- Weather card on Home, live web search, screen share + visual tasks, multi-command sentences.
+- Premium: license activation unlocks unlimited sessions; free plan gives 30 minutes a day.
+When a request maps to a feature, explain in 1-2 short Hindi lines how it works and execute it.
+""".trimIndent()
+
+    /** DEV STYLE: parses an incoming request into a shell command, or null when it is not one. */
+    private fun parseShellCommand(input: String): String? {
+        var s = input.trim()
+        val lower = s.lowercase()
+        for (p in listOf("jarvis ", "please ", "run ", "execute ", "chalo ", "cholao ", "sh ", "$ ", "> ")) {
+            if (lower.startsWith(p)) { s = s.drop(p.length).trim(); break }
+        }
+        val first = s.split(Regex("\\s+")).firstOrNull()?.lowercase() ?: return null
+        val known = setOf(
+            "ls", "pwd", "cat", "echo", "mkdir", "touch", "rm", "cp", "mv", "grep", "find", "head", "tail",
+            "df", "free", "ps", "date", "whoami", "uname", "chmod", "tar", "zip", "unzip", "git", "java",
+            "apt", "apt-get", "pkg", "apk", "python", "python3", "pip", "pip3", "node", "npm", "npx",
+            "gcc", "g++", "bash", "wget", "curl", "crontab"
+        )
+        return if (first in known) s else null
     }
 
     private fun replyIndicatesInability(userInput: String, reply: String): Boolean {
