@@ -262,6 +262,14 @@ class AppPreferences(context: Context) {
         get() = prefs.getString("key_update_check_url", "") ?: ""
         set(value) = prefs.edit().putString("key_update_check_url", value.trim()).apply()
 
+    var notificationExcludedApps: Set<String>
+        get() = prefs.getStringSet("key_notification_excluded_apps", emptySet()) ?: emptySet()
+        set(value) = prefs.edit().putStringSet("key_notification_excluded_apps", value).apply()
+
+    var notificationAiSummaryConsent: Boolean
+        get() = prefs.getBoolean("key_notification_ai_consent", false)
+        set(value) = prefs.edit().putBoolean("key_notification_ai_consent", value).apply()
+
     // DEV STYLE: On-Guard mode — lift detection + intruder selfie
     var isThiefGuardEnabled: Boolean
         get() = prefs.getBoolean(KEY_THIEF_GUARD, false)

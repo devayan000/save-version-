@@ -30,6 +30,12 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
@@ -126,6 +132,34 @@
         <activity android:name=".security.UnlockActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" />
         <activity android:name=".vision.ScreenToolsActivity" android:exported="false" />
         <service android:name=".vision.ScreenToolsService" android:exported="false" android:foregroundServiceType="mediaProjection" />
+
+        <activity android:name=".share.ShareReceiverActivity" android:exported="true" android:label="Share to Jarvis" android:theme="@style/Theme.JarvisAssistant.Light">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".scanner.ScannerActivity" android:exported="false" />
+        <activity android:name=".battery.BatteryActivity" android:exported="false" />
+        <activity android:name=".media.MediaLibraryActivity" android:exported="false" />
+        <activity android:name=".screencontext.ScreenContextActivity" android:exported="true" android:label="Jarvis Screen Context" android:theme="@style/Theme.JarvisAssistant.Light">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+        <service android:name=".notifications.JarvisNotificationListenerService" android:exported="false" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
         <service
             android:name=".background.JarvisConversationService"

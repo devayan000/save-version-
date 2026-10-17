@@ -30,6 +30,13 @@ import com.jarvis.assistant.bugs.BugReportRepository
 import com.jarvis.assistant.performance.PerformanceMonitoringService
 import com.jarvis.assistant.singing.SingingService
 import com.jarvis.assistant.tools.GoogleSearchService
+import com.jarvis.assistant.notifications.NotificationBriefingActivity
+import com.jarvis.assistant.scanner.ScannerActivity
+import com.jarvis.assistant.battery.BatteryActivity
+import com.jarvis.assistant.media.MediaLibraryActivity
+import com.jarvis.assistant.screencontext.ScreenContextActivity
+import com.jarvis.assistant.share.ShareReceiverActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import android.content.ClipData
 import android.content.ClipboardManager
 
@@ -209,7 +216,7 @@ class SettingsFragment : Fragment() {
         binding.rowAppIdentity.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Jarvis Control Center")
-                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings")) { _, which ->
+                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings", "Share to Jarvis", "Notification Briefing", "Camera Scanner", "Battery Intelligence", "Media Library", "Screen Context")) { _, which ->
                     when (which) {
                         0 -> MaterialAlertDialogBuilder(requireContext()).setTitle("JARVIS App Identity").setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext())).setPositiveButton("Close", null).show()
                         1 -> showUpdateDialog()
@@ -219,6 +226,12 @@ class SettingsFragment : Fragment() {
                         5 -> showPerformanceDashboardDialog()
                         6 -> showSingingSettingsDialog()
                         7 -> showSearchSettingsDialog()
+                        8 -> startActivity(Intent(requireContext(), ShareReceiverActivity::class.java))
+                        9 -> startActivity(Intent(requireContext(), NotificationBriefingActivity::class.java))
+                        10 -> { if (checkSelfPermission(android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) requestCameraLauncher.launch(android.Manifest.permission.CAMERA) else startActivity(Intent(requireContext(), ScannerActivity::class.java)) }
+                        11 -> startActivity(Intent(requireContext(), BatteryActivity::class.java))
+                        12 -> startActivity(Intent(requireContext(), MediaLibraryActivity::class.java))
+                        13 -> startActivity(Intent(requireContext(), ScreenContextActivity::class.java))
                     }
                 }
                 .show()
@@ -278,6 +291,11 @@ class SettingsFragment : Fragment() {
                 .setNegativeButton("Later", null)
                 .show()
         }
+    }
+
+    private val requestCameraLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) startActivity(Intent(requireContext(), ScannerActivity::class.java))
+        else Toast.makeText(requireContext(), "Camera permission denied. Grant it in Android Settings.", Toast.LENGTH_LONG).show()
     }
 
     private fun showPremiumAccessDialog() {
