@@ -13,6 +13,7 @@ import com.jarvis.assistant.data.memory.MemoryDatabase
 import com.jarvis.assistant.data.memory.MemoryManager
 import com.jarvis.assistant.data.memory.MemoryRepository
 import com.jarvis.assistant.data.preferences.AppPreferences
+import com.jarvis.assistant.data.preferences.GithubPreferences
 import com.jarvis.assistant.data.preferences.ImgbbPreferences
 import com.jarvis.assistant.data.preferences.YouTubePreferences
 import com.jarvis.assistant.data.repository.ChatRepository
@@ -49,6 +50,9 @@ class JarvisApp : Application() {
     lateinit var imgbbPreferences: ImgbbPreferences
         private set
 
+    lateinit var githubPreferences: GithubPreferences
+        private set
+
     lateinit var youTubeAutomationManager: YouTubeAutomationManager
         private set
 
@@ -79,6 +83,7 @@ class JarvisApp : Application() {
         // Automation Systems
         youTubePreferences = YouTubePreferences(this)
         imgbbPreferences = ImgbbPreferences(this)
+        githubPreferences = GithubPreferences(this)
         youTubeAutomationManager = YouTubeAutomationManager(this, youTubePreferences)
         contactResolver = ContactResolver(this)
         phoneControlManager = PhoneControlManager(this, contactResolver)
