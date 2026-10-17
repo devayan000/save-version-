@@ -109,4 +109,67 @@ object GoogleSearchService {
             SearchResult(false, "", "Search failed: " + e.message)
         }
     }
+
+    /**
+     * Free fallback search using DuckDuckGo Lite. Works with no API key and no
+     * provider configuration, so background web search always has a path.
+     */
+    fun searchFree(query: String): SearchResult {
+        return try {
+            val encoded = URLEncoder.encode(query, "UTF-8")
+            val url = URL("https://lite.duckduckgo.com/lite/?q=" + encoded)
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 8000
+                readTimeout = 12000
+                setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36")
+            }
+            val code = conn.responseCode
+            val body = (conn.inputStream.bufferedReader()?.readText() ?: "")
+            conn.disconnect()
+            if (code in 200..299) {
+                val parsed = parseLiteResults(body)
+                if (parsed.isNotBlank()) SearchResult(true, parsed, null)
+                else SearchResult(false, "", "No search results found.")
+            } else SearchResult(false, "", "Free search failed (HTTP " + code + ").")
+        } catch (e: java.net.SocketTimeoutException) {
+            SearchResult(false, "", "Free search timed out.")
+        } catch (e: Exception) {
+            SearchResult(false, "", "Free search failed: " + e.message)
+        }
+    }
+
+    /** Parses DuckDuckGo Lite HTML into a compact list of titles, links and snippets. */
+    fun parseLiteResults(html: String): String {
+        val snippetRegex = Regex("<td[^>]*class=\"result-snippet\"[^>]*>(.*?)</td>", RegexOption.DOT_MATCHES_ALL)
+        val linkRegex = Regex("<a[^>]*rel=\"nofollow\"[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>", RegexOption.DOT_MATCHES_ALL)
+        val snippets = snippetRegex.findAll(html).map { m ->
+            m.groupValues[1].replace(Regex("<[^>]*>"), "").trim()
+        }.toList()
+        val sb = StringBuilder()
+        var i = 0
+        for (m in linkRegex.findAll(html)) {
+            val href = m.groupValues[1]
+            val title = m.groupValues[2].replace(Regex("<[^>]*>"), "").trim()
+            if (title.isBlank() || href.startsWith("/")) continue
+            if (i >= 6) break
+            sb.append(i + 1).append(". ").append(title).append(" - ").append(href)
+            if (i < snippets.size && snippets[i].isNotBlank()) sb.append("\n   ").append(snippets[i].take(220))
+            sb.append("\n")
+            i++
+        }
+        return sb.toString().trim()
+    }
+
+    /**
+     * Unified background search: uses the configured provider when available,
+     * otherwise falls back to the free DuckDuckGo search automatically.
+     */
+    fun searchWithFallback(ctx: Context, query: String): SearchResult {
+        if (isConfigured(ctx)) {
+            val configured = search(ctx, query)
+            if (configured.success) return configured
+        }
+        return searchFree(query)
+    }
 }
