@@ -225,7 +225,7 @@ class SettingsFragment : Fragment() {
         binding.rowAppIdentity.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Jarvis Control Center")
-                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings", "Share to Jarvis", "Notification Briefing", "Camera Scanner", "Battery Intelligence", "Media Library", "Screen Context", "Project Planner", "Prompt Lab", "Personality", "Photo Memory", "Browser Agent", "Decision DNA", "Debate Chamber", "Time Machine", "Failure Autopsy")) { _, which ->
+                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings", "Share to Jarvis", "Notification Briefing", "Camera Scanner", "Battery Intelligence", "Media Library", "Screen Context", "Project Planner", "Prompt Lab", "Personality", "Photo Memory", "Browser Agent", "Decision DNA", "Debate Chamber", "Time Machine", "Failure Autopsy", "Google Workspace")) { _, which ->
                     when (which) {
                         0 -> MaterialAlertDialogBuilder(requireContext()).setTitle("JARVIS App Identity").setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext())).setPositiveButton("Close", null).show()
                         1 -> showUpdateDialog()
@@ -250,6 +250,7 @@ class SettingsFragment : Fragment() {
                         20 -> startActivity(Intent(requireContext(), DebateActivity::class.java))
                         21 -> startActivity(Intent(requireContext(), TimeMachineActivity::class.java))
                         22 -> startActivity(Intent(requireContext(), FailureAutopsyActivity::class.java))
+                        23 -> startActivity(Intent(requireContext(), com.jarvis.assistant.google.GoogleWorkspaceActivity::class.java))
                     }
                 }
                 .show()
