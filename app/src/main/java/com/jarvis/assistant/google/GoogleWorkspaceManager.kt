@@ -66,17 +66,23 @@ class GoogleWorkspacePreferences(context: Context) {
 
 /**
  * Google Workspace authorization through the official AuthorizationClient API.
- * Only read-only scopes are requested: Gmail, Calendar and Drive.
+ * Gmail (read + send), Calendar (read + create events) and Drive (read).
  * The access token is short-lived and is never stored - whenever Google data is
  * needed, authorize() is called again and Play services returns a fresh token
  * silently while the grants exist, or asks for renewed consent when required.
  */
 object GoogleWorkspaceManager {
     const val SCOPE_GMAIL = "https://www.googleapis.com/auth/gmail.readonly"
+    const val SCOPE_GMAIL_SEND = "https://www.googleapis.com/auth/gmail.send"
     const val SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar.readonly"
+    const val SCOPE_CALENDAR_EVENTS = "https://www.googleapis.com/auth/calendar.events"
     const val SCOPE_DRIVE = "https://www.googleapis.com/auth/drive.readonly"
 
-    private val SCOPES = listOf(Scope(SCOPE_GMAIL), Scope(SCOPE_CALENDAR), Scope(SCOPE_DRIVE))
+    private val SCOPES = listOf(
+        Scope(SCOPE_GMAIL), Scope(SCOPE_GMAIL_SEND),
+        Scope(SCOPE_CALENDAR), Scope(SCOPE_CALENDAR_EVENTS),
+        Scope(SCOPE_DRIVE)
+    )
     private val http = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
@@ -272,6 +278,131 @@ object GoogleWorkspaceManager {
                 onDone("Disconnected locally. Google revoke not confirmed.")
             }
         )
+    }
+
+    // ---- DEV STYLE: real in-app actions - no external app or browser is ever opened ----
+
+    private fun toBase64Url(text: String): String =
+        android.util.Base64.encodeToString(text.toByteArray(Charsets.UTF_8),
+            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING)
+
+    /** Send an email directly through the connected Gmail. */
+    fun sendEmail(context: Context, to: String, subject: String, body: String, onDone: (String) -> Unit) {
+        getAccessToken(context, { token ->
+            executor.submit {
+                try {
+                    val mime = "To: $to\r\nSubject: $subject\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n$body"
+                    val payload = JSONObject().put("raw", toBase64Url(mime))
+                    http.newCall(
+                        Request.Builder()
+                            .url("https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
+                            .header("Authorization", "Bearer " + token)
+                            .post(RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), payload.toString()))
+                            .build()
+                    ).execute().use { r ->
+                        val text = r.body?.string().orEmpty()
+                        if (!r.isSuccessful) throw Exception("HTTP " + r.code + " - " + text.take(160))
+                    }
+                    main.post { onDone("OK - email sent to " + to) }
+                } catch (e: Exception) {
+                    main.post { onDone("FAILED - " + (e.message ?: "error")) }
+                }
+            }
+        }, { error -> onDone("FAILED - " + error) })
+    }
+
+    /** Create a calendar event directly - the Calendar app is never opened. */
+    fun createCalendarEvent(context: Context, title: String, startIso: String, endIso: String, description: String, onDone: (String) -> Unit) {
+        getAccessToken(context, { token ->
+            executor.submit {
+                try {
+                    val tz = java.util.TimeZone.getDefault().id
+                    val body = JSONObject()
+                        .put("summary", title)
+                        .put("description", description)
+                        .put("start", JSONObject().put("dateTime", startIso).put("timeZone", tz))
+                        .put("end", JSONObject().put("dateTime", endIso).put("timeZone", tz))
+                    val link = http.newCall(
+                        Request.Builder()
+                            .url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
+                            .header("Authorization", "Bearer " + token)
+                            .post(RequestBody.create(okhttp3.MediaType.get("application/json; charset=utf-8"), body.toString()))
+                            .build()
+                    ).execute().use { r ->
+                        val text = r.body?.string().orEmpty()
+                        if (!r.isSuccessful) throw Exception("HTTP " + r.code + " - " + text.take(160))
+                        JSONObject(text).optString("htmlUrl")
+                    }
+                    main.post { onDone("OK - '" + title + "' set on the calendar " + link) }
+                } catch (e: Exception) {
+                    main.post { onDone("FAILED - " + (e.message ?: "error")) }
+                }
+            }
+        }, { error -> onDone("FAILED - " + error) })
+    }
+
+    /** Read the latest emails in-app. */
+    fun readRecentEmails(context: Context, count: Int, onDone: (String) -> Unit) {
+        getAccessToken(context, { token ->
+            executor.submit {
+                try {
+                    val listUrl = "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=" + count.coerceIn(1, 10)
+                    val list = JSONObject(http.newCall(Request.Builder().url(listUrl).header("Authorization", "Bearer " + token).build())
+                        .execute().use { r -> if (!r.isSuccessful) throw Exception("HTTP " + r.code); r.body?.string().orEmpty() })
+                        .optJSONArray("messages") ?: org.json.JSONArray()
+                    val sb = StringBuilder()
+                    for (i in 0 until list.length()) {
+                        val id = list.getJSONObject(i).optString("id")
+                        val msg = JSONObject(http.newCall(
+                            Request.Builder()
+                                .url("https://gmail.googleapis.com/gmail/v1/users/me/messages/" + id + "?format=metadata&metadataHeaders=Subject&metadataHeaders=From")
+                                .header("Authorization", "Bearer " + token)
+                                .build()
+                        ).execute().use { r -> if (!r.isSuccessful) throw Exception("HTTP " + r.code); r.body?.string().orEmpty() })
+                        var from = ""; var subject = ""
+                        val headers = msg.optJSONObject("payload")?.optJSONArray("headers")
+                        if (headers != null) for (h in 0 until headers.length()) {
+                            val name = headers.getJSONObject(h).optString("name")
+                            if (name.equals("From", true)) from = headers.getJSONObject(h).optString("value")
+                            if (name.equals("Subject", true)) subject = headers.getJSONObject(h).optString("value")
+                        }
+                        sb.append("\u2022 ").append(if (subject.isBlank()) "(no subject)" else subject)
+                            .append(" \u2014 ").append(from).append("\n")
+                    }
+                    main.post { onDone(if (sb.isBlank()) "Inbox is empty." else sb.toString().trim()) }
+                } catch (e: Exception) {
+                    main.post { onDone("FAILED - " + (e.message ?: "error")) }
+                }
+            }
+        }, { error -> onDone("FAILED - " + error) })
+    }
+
+    /** List upcoming calendar events in-app. */
+    fun listUpcomingEvents(context: Context, count: Int, onDone: (String) -> Unit) {
+        getAccessToken(context, { token ->
+            executor.submit {
+                try {
+                    val now = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).apply {
+                        timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    }.format(java.util.Date())
+                    val url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=" +
+                        java.net.URLEncoder.encode(now, "UTF-8") +
+                        "&maxResults=" + count.coerceIn(1, 10) + "&singleEvents=true&orderBy=startTime"
+                    val items = JSONObject(http.newCall(Request.Builder().url(url).header("Authorization", "Bearer " + token).build())
+                        .execute().use { r -> if (!r.isSuccessful) throw Exception("HTTP " + r.code); r.body?.string().orEmpty() })
+                        .optJSONArray("items") ?: org.json.JSONArray()
+                    val sb = StringBuilder()
+                    for (i in 0 until items.length()) {
+                        val ev = items.getJSONObject(i)
+                        val start = ev.optJSONObject("start")?.optString("dateTime").orEmpty().replace("T", " ").take(16)
+                        sb.append("\u2022 ").append(start).append(" \u2014 ").append(ev.optString("summary", "(no title)")).append("\n")
+                    }
+                    main.post { onDone(if (sb.isBlank()) "No upcoming events." else sb.toString().trim()) }
+                } catch (e: Exception) {
+                    main.post { onDone("FAILED - " + (e.message ?: "error")) }
+                }
+            }
+        }, { error -> onDone("FAILED - " + error) })
     }
 
     private fun humanBytes(value: Long): String {
