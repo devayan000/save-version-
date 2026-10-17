@@ -111,7 +111,7 @@ class CommandExecutor(
                 val settings = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.fromParts("package", app.packageName, null))
                 settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 app.startActivity(settings)
-                "On-Guard ON korar age Camera permission dorkar. Settings khulechi - Jarvis app er Camera permission allow koro, tarpor abar bolo."
+                "On-Guard needs the Camera permission first. I opened the app settings - allow Camera for Jarvis, then ask me again."
             } else {
                 app.preferences.isThiefGuardEnabled = true
                 ContextCompat.startForegroundService(app, intent)
