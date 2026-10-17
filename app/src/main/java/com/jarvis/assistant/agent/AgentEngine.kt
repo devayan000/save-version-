@@ -80,7 +80,7 @@ object AgentEngine {
             sb.insert(0, TaskPlanner.planBlock(plan))
         }
         if (FeatureFlags.isEnabled(FeatureFlags.toolOrchestration)) {
-            val tools = ToolOrchestrator.describe(userInput)
+            val tools = ToolOrchestrator.describe(request)
             if (tools.isNotBlank()) sb.insert(0, tools)
             // Background web search: for questions or explicit search requests, fetch live
             // web results first so the answer is grounded in fresh, real information.
