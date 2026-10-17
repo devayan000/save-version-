@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class JarvisApp : Application() {
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var guardReportTts: android.speech.tts.TextToSpeech? = null
 
     lateinit var preferences: AppPreferences
         private set
@@ -106,6 +107,31 @@ class JarvisApp : Application() {
                     this@JarvisApp,
                     android.content.Intent(this@JarvisApp, com.jarvis.assistant.security.ThiefGuardService::class.java)
                 )
+            }
+        }
+
+        // DEV STYLE: On-Guard report - tell the owner about captures taken while away
+        val unseen = preferences.thiefGuardUnseenCaptures
+        if (unseen > 0) {
+            preferences.thiefGuardUnseenCaptures = 0
+            runCatching {
+                val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                guardReportTts = android.speech.tts.TextToSpeech(this@JarvisApp) { status ->
+                    if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                        handler.postDelayed({
+                            val msg = if (unseen == 1)
+                                "On-Guard alert. While you were away, one intruder photo was captured. Saved in the JarvisGuard folder."
+                            else
+                                "On-Guard alert. While you were away, " + unseen + " intruder photos were captured. Saved in the JarvisGuard folder."
+                            guardReportTts?.speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "guard_report")
+                            android.widget.Toast.makeText(
+                                this@JarvisApp,
+                                "On-Guard: " + unseen + " intruder photo(s) saved while you were away",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }, 1500)
+                    }
+                }
             }
         }
 
