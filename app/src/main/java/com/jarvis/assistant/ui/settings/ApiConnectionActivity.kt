@@ -126,6 +126,20 @@ class ApiConnectionActivity : AppCompatActivity() {
         binding.btnImgbbKey.setOnClickListener {
             showImgbbKeyDialog()
         }
+ 
+
+        // GitHub Research launcher (added in code: the XML layout is near the entity size limit)
+        val researchBtn = com.google.android.material.button.MaterialButton(this)
+        researchBtn.text = "GitHub Research (Developer Agent)"
+        researchBtn.isAllCaps = false
+        researchBtn.layoutParams = android.widget.LinearLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            (40 * resources.displayMetrics.density).toInt()
+        ).apply { topMargin = (12 * resources.displayMetrics.density).toInt() }
+        researchBtn.setOnClickListener {
+            startActivity(android.content.Intent(this, com.jarvis.assistant.developer.GitHubResearchActivity::class.java))
+        }
+        (binding.btnImgbbKey.parent as? android.view.ViewGroup)?.addView(researchBtn)
     }
 
     private fun updateImgbbStatus() {
