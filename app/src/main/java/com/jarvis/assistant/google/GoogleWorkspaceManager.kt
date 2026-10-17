@@ -169,7 +169,8 @@ object GoogleWorkspaceManager {
     fun testGmail(context: Context, onDone: (String) -> Unit) = testApi(
         context,
         "https://gmail.googleapis.com/gmail/v1/users/me/profile",
-        "Gmail"
+        "Gmail",
+        onDone
     ) { response ->
         "OK - connected to " + response.optString("emailAddress") + " (" + response.optInt("messagesTotal") + " messages)"
     }
@@ -177,7 +178,8 @@ object GoogleWorkspaceManager {
     fun testCalendar(context: Context, onDone: (String) -> Unit) = testApi(
         context,
         "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1",
-        "Calendar"
+        "Calendar",
+        onDone
     ) { response ->
         val count = response.optJSONArray("items")?.length() ?: 0
         "OK - calendar list reachable, " + count + " calendar(s) returned"
@@ -186,7 +188,8 @@ object GoogleWorkspaceManager {
     fun testDrive(context: Context, onDone: (String) -> Unit) = testApi(
         context,
         "https://www.googleapis.com/drive/v3/about?fields=user,storageQuota",
-        "Drive"
+        "Drive",
+        onDone
     ) { response ->
         val user = response.optJSONObject("user")
         val email = user?.optString("emailAddress") ?: "unknown"
@@ -196,7 +199,7 @@ object GoogleWorkspaceManager {
         "OK - " + email + ", " + humanBytes(usage) + " of " + (if (limit > 0) humanBytes(limit) else "unlimited") + " used"
     }
 
-    private fun testApi(context: Context, url: String, label: String, summarize: (JSONObject) -> String) {
+    private fun testApi(context: Context, url: String, label: String, onDone: (String) -> Unit, summarize: (JSONObject) -> String) {
         getAccessToken(context, { token ->
             executor.submit {
                 try {
