@@ -117,7 +117,7 @@ class HomeFragment : Fragment() {
 
         // Action Buttons
         binding.btnScreenShareQuick.setOnClickListener {
-            (activity as? MainActivity)?.toggleScreenShare()
+            (activity as? MainActivity)?.toggleLiveScreenShare()
         }
 
         binding.btnSavedMemories.setOnClickListener {
