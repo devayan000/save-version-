@@ -203,7 +203,7 @@ class HomeFragment : Fragment() {
                 v.onTouchEvent(event)
             }
 
-            loadUrl("file:///android_asset/orb.html?embedded=1")
+            loadUrl("file:///android_asset/avatar.html?embedded=1")
         }
     }
 
