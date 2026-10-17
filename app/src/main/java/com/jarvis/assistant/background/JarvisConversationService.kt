@@ -3323,15 +3323,26 @@ class JarvisConversationService : Service() {
         "jarvis jarvis"
     )
 
-    // DEV STYLE: premium users can set their own wake word in Persona — it joins the built-in set.
+    // DEV STYLE: the premium custom wake word (Persona) AND the owner's chosen
+    // name both join the built-in "jarvis" wake set.
     private fun validWakePhrases(): Set<String> {
-        val custom = ((application as? JarvisApp)?.preferences?.customWakeWord ?: "")
-            .trim().lowercase().replace(Regex("[\",]"), "")
-        if (custom.isBlank() || custom == "jarvis") return DEFAULT_WAKE_PHRASES
-        return DEFAULT_WAKE_PHRASES + setOf(
-            custom, "hey " + custom, "hi " + custom, "hello " + custom,
-            "ok " + custom, "okay " + custom, "wake up " + custom, custom + " " + custom
-        )
+        val prefs = (application as? JarvisApp)?.preferences
+        val custom = (prefs?.customWakeWord ?: "").trim().lowercase().replace(Regex("[\",]"), "")
+        val ownerName = (prefs?.userName ?: "").trim().lowercase().replace(Regex("[^a-z]"), "")
+        val phrases = DEFAULT_WAKE_PHRASES.toMutableSet()
+        if (custom.isNotBlank() && custom != "jarvis") {
+            phrases.addAll(setOf(
+                custom, "hey " + custom, "hi " + custom, "hello " + custom,
+                "ok " + custom, "okay " + custom, "wake up " + custom
+            ))
+        }
+        if (ownerName.length >= 3 && ownerName != "jarvis" && ownerName != custom) {
+            phrases.addAll(setOf(
+                "hey " + ownerName, "hi " + ownerName, "hello " + ownerName,
+                "ok " + ownerName, "okay " + ownerName, "wake up " + ownerName
+            ))
+        }
+        return phrases
     }
 
     private fun checkVoskHypothesis(hypothesisJson: String?) {
