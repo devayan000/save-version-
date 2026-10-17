@@ -1,9 +1,11 @@
 package com.jarvis.assistant.google
 
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -13,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.jarvis.assistant.R
 import com.jarvis.assistant.util.ThemeManager
@@ -24,6 +27,7 @@ import java.util.Locale
 class GoogleWorkspaceActivity : AppCompatActivity() {
 
     private lateinit var root: View
+    private lateinit var statusDot: View
     private lateinit var statusText: TextView
     private lateinit var accountText: TextView
     private lateinit var connectButton: MaterialButton
@@ -62,53 +66,104 @@ class GoogleWorkspaceActivity : AppCompatActivity() {
 
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(px(24), px(20), px(24), px(32))
+            setPadding(px(22), px(20), px(22), px(32))
         }
 
-        column.addView(TextView(this).apply {
+        // Hero header: gradient "G" tile + title stack
+        val headerRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val iconTile = TextView(this).apply {
+            text = "G"
+            textSize = 26f
+            setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD))
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            background = ContextCompat.getDrawable(context, R.drawable.bg_premium_button_gradient)
+        }
+        iconTile.layoutParams = LinearLayout.LayoutParams(px(52), px(52)).apply { marginEnd = px(14) }
+        headerRow.addView(iconTile)
+
+        val titleCol = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        titleCol.addView(TextView(this).apply {
             text = "GOOGLE WORKSPACE"
             textSize = 20f
-            setTypeface(Typeface.DEFAULT_BOLD)
+            setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD))
             setTextColor(textPrimary)
+            letterSpacing = 0.04f
         })
-        column.addView(TextView(this).apply {
-            text = "Gmail, Calendar and Drive through the official Google authorization API. Read-only access. The access token is never saved - only the connection status is, encrypted."
+        titleCol.addView(TextView(this).apply {
+            text = "Gmail  ·  Calendar  ·  Drive"
             textSize = 13f
             setTextColor(textMuted)
-            setPadding(0, px(6), 0, px(16))
+            setPadding(0, px(3), 0, 0)
+        })
+        headerRow.addView(titleCol)
+        column.addView(headerRow)
+
+        column.addView(TextView(this).apply {
+            text = "Official Google authorization API. Read-only access — the token is never saved, only the encrypted connection status."
+            textSize = 13f
+            setTextColor(textMuted)
+            setPadding(0, px(12), 0, px(18))
         })
 
+        // Status card
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundResource(R.drawable.bg_jarvis_action_card)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_jarvis_action_card)
             setPadding(px(20), px(16), px(20), px(20))
         }
+        val statusRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        statusDot = View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(px(10), px(10)).apply { marginEnd = px(9) }
+            background = ContextCompat.getDrawable(context, R.drawable.bg_status_dot)
+        }
+        statusRow.addView(statusDot)
         statusText = TextView(this).apply {
             textSize = 15f
-            setTypeface(Typeface.DEFAULT_BOLD)
+            setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD))
             setTextColor(textPrimary)
+            letterSpacing = 0.06f
         }
+        statusRow.addView(statusText)
+        card.addView(statusRow)
         accountText = TextView(this).apply {
             textSize = 13f
             setTextColor(textMuted)
-            setPadding(0, px(4), 0, 0)
+            setPadding(0, px(6), 0, 0)
         }
-        card.addView(statusText)
         card.addView(accountText)
         column.addView(card)
 
+        // Connect — premium gradient pill
         connectButton = MaterialButton(this).apply {
             text = "Connect Google Workspace"
-            setOnClickListener { connect() }
+            isAllCaps = false
+            textSize = 15f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            backgroundTintList = null
+            background = ContextCompat.getDrawable(context, R.drawable.bg_premium_button_gradient)
+            minHeight = px(54)
+            isSoundEffectsEnabled = false
         }
-        column.addView(connectButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(0, px(16), 0, 0) })
+        column.addView(connectButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            setMargins(0, px(18), 0, 0)
+        })
 
+        // Section label
         column.addView(TextView(this).apply {
             text = "TEST EACH API"
-            textSize = 13f
-            setTypeface(Typeface.DEFAULT_BOLD)
+            textSize = 12f
+            setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD))
             setTextColor(textMuted)
-            setPadding(0, px(20), 0, px(8))
+            letterSpacing = 0.12f
+            setPadding(0, px(24), 0, px(10))
         })
 
         listOf(
@@ -120,29 +175,43 @@ class GoogleWorkspaceActivity : AppCompatActivity() {
             val run = pair.second
             val button = MaterialButton(this).apply {
                 text = label
-                setOnClickListener {
-                    testResult.text = label.replace("Test ", "") + ": testing..."
-                    run { message ->
-                        testResult.text = message
-                    }
-                }
+                isAllCaps = false
+                textSize = 14f
+                setTextColor(textPrimary)
+                backgroundTintList = null
+                background = ContextCompat.getDrawable(context, R.drawable.bg_gw_test_button)
+                minHeight = px(50)
+            }
+            button.setOnClickListener {
+                testResult.text = label.replace("Test ", "") + ": testing..."
+                run { message -> testResult.text = message }
             }
             testButtons.add(button)
-            column.addView(button, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(0, px(4), 0, 0) })
+            column.addView(button, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(0, px(6), 0, 0)
+            })
         }
 
         testResult = TextView(this).apply {
             textSize = 13f
             setTextColor(textMuted)
-            setPadding(0, px(10), 0, 0)
+            setPadding(0, px(12), 0, 0)
         }
         column.addView(testResult)
 
+        // Disconnect — ghost pill
         disconnectButton = MaterialButton(this).apply {
             text = "Disconnect"
-            setOnClickListener { disconnect() }
+            isAllCaps = false
+            textSize = 14f
+            setTextColor(textMuted)
+            backgroundTintList = null
+            background = ContextCompat.getDrawable(context, R.drawable.bg_gw_ghost_button)
+            minHeight = px(48)
         }
-        column.addView(disconnectButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(0, px(20), 0, 0) })
+        column.addView(disconnectButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            setMargins(0, px(22), 0, 0)
+        })
 
         return ScrollView(this).apply { addView(column) }
     }
@@ -150,6 +219,7 @@ class GoogleWorkspaceActivity : AppCompatActivity() {
     private fun refreshUi() {
         val prefs = GoogleWorkspaceManager.preferences(this)
         if (prefs.connected) {
+            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#10B981"))
             statusText.text = "CONNECTED"
             statusText.setTextColor(Color.parseColor("#10B981"))
             val time = if (prefs.connectedAtMs > 0) SimpleDateFormat("d MMM yyyy, h:mm a", Locale.getDefault()).format(Date(prefs.connectedAtMs)) else "unknown"
@@ -157,6 +227,7 @@ class GoogleWorkspaceActivity : AppCompatActivity() {
             connectButton.text = "Re-authorize"
             disconnectButton.isEnabled = true
         } else {
+            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EF4444"))
             statusText.text = "NOT CONNECTED"
             statusText.setTextColor(Color.parseColor("#EF4444"))
             accountText.text = "Connect to let Jarvis read your Gmail, Calendar and Drive."
