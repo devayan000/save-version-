@@ -115,7 +115,7 @@ class CommandExecutor(
             } else {
                 app.preferences.isThiefGuardEnabled = true
                 ContextCompat.startForegroundService(app, intent)
-                "On-Guard mode ON. Phone table-e rakhle goruche keu tulle quiet-bhabhe photo nibe, tumi phire asle ami janabo."
+                "On-Guard is ON. If someone lifts the phone while it is resting, I will quietly take their photo, and I will tell you when you come back."
             }
         } else {
             app.preferences.isThiefGuardEnabled = false
