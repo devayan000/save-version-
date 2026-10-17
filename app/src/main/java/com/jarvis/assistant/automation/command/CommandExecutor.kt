@@ -85,6 +85,18 @@ class CommandExecutor(
             is JarvisCommand.RecallRoutine -> memoryManager.getRoutineResponse()
             is JarvisCommand.Decision -> com.jarvis.assistant.util.DecisionEngine.decide(command.topic)
             is JarvisCommand.GoToBackground -> "Going to background."
+            is JarvisCommand.SetUserName -> {
+                val app = com.jarvis.assistant.JarvisApp.instance
+                app.preferences.userName = command.name
+                "Yes - from now on I will call you " + command.name + ". You can also wake me by saying your name."
+            }
+            is JarvisCommand.SetWakeWord -> {
+                val app = com.jarvis.assistant.JarvisApp.instance
+                app.preferences.customWakeWord = command.name
+                "Yes - saved. From now on say \"" + command.name + "\" or \"Jarvis\" to wake me."
+            }
+            is JarvisCommand.SkillLab -> com.jarvis.assistant.agent.skills.SkillEvolutionLab.labReport()
+            is JarvisCommand.PlanGoal -> com.jarvis.assistant.agent.planning.ParallelUniversePlanner.report(command.goal)
             is JarvisCommand.LockPhone -> phoneManager.lockPhone()
             is JarvisCommand.ToggleOnGuard -> toggleOnGuard(command.enable)
         }
