@@ -50,8 +50,13 @@ class ProjectPlannerTest {
         val withMs = store.get(plan.id)!!
         store.addTask(plan.id, withMs.milestones[0].id, "Design", "", emptyList(), "")
         val withTask = store.get(plan.id)!!
+        val designId = withTask.milestones[0].tasks.first { it.title == "Design" }.id
+        // Build depends on the still-unfinished Design task; Test depends on a task that doesn't exist
+        store.addTask(plan.id, withTask.milestones[0].id, "Build", "", listOf(designId), "")
+        val withBuild = store.get(plan.id)!!
         // Verify the store persists across calls
         assertNotNull(store.get(plan.id))
+        store.addTask(plan.id, withBuild.milestones[0].id, "Test", "", listOf("nonexistent"), "")
         val warnings = store.analyzePlan(plan.id)
         assertTrue(warnings.any { it.contains("blocked") || it.contains("unknown") })
     }
