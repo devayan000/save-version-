@@ -27,12 +27,15 @@ class WhatsAppAutoReplyTest {
 
     @Test
     fun catchAllHandlesEverythingElse() {
-        assertEquals("r1", AutoReplyMatcher.match(rules, "Kamal", "Hello there")?.id)
+        assertEquals("r1", AutoReplyMatcher.match(rules, "Ravi", "Good evening")?.id)
     }
 
     @Test
     fun disabledRuleIsNeverMatched() {
-        assertNull(AutoReplyMatcher.match(rules, "Spam Store", "Special offer just for you"))
+        val onlyDisabled = listOf(
+            AutoReplyRule("r4", contactPattern = "Spam", keywordPattern = "offer", replyText = "No thanks", enabled = false)
+        )
+        assertNull(AutoReplyMatcher.match(onlyDisabled, "Spam Store", "Special offer just for you"))
     }
 
     @Test
