@@ -39,4 +39,10 @@ sealed class JarvisCommand {
     object LockPhone : JarvisCommand()
 
     data class ToggleOnGuard(val enable: Boolean) : JarvisCommand()
+
+    // DEV STYLE: owner identity, skill lab and parallel-universe planning
+    data class SetUserName(val name: String) : JarvisCommand()
+    data class SetWakeWord(val name: String) : JarvisCommand()
+    object SkillLab : JarvisCommand()
+    data class PlanGoal(val goal: String) : JarvisCommand()
 }
