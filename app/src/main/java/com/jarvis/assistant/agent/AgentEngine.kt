@@ -59,7 +59,7 @@ object AgentEngine {
         }
 
         if (FeatureFlags.isEnabled(FeatureFlags.emotionalIntelligence)) {
-            val emotion = EmotionalIntelligence.detect(userInput)
+            val emotion = EmotionalIntelligence.detect(request)
             sb.insert(0, EmotionalIntelligence.systemPrefix(emotion))
             if (FeatureFlags.isEnabled(FeatureFlags.dynamicPersonality)) {
                 DynamicPersonality.adapt(context, emotion.name, userInput)
