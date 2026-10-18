@@ -211,6 +211,9 @@ class SettingsFragment : Fragment() {
         binding.rowPrivacyPolicy.setOnClickListener {
             startActivity(Intent(requireContext(), PrivacyShieldActivity::class.java))
         }
+        binding.rowAppUpdates.setOnClickListener {
+            startActivity(Intent(requireContext(), com.jarvis.assistant.ui.home.UpdatesActivity::class.java))
+        }
 
 // Premium Activation — DEV STYLE licence
         binding.rowPremium.setOnClickListener {
