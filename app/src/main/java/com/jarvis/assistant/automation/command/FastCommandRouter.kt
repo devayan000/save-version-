@@ -23,9 +23,8 @@ object FastCommandRouter {
 
     private val punct = Regex("[\\p{Punct}\\u0964]")
 
-    private fun normalize(text: String): String = text.trim()
-        .lowercase(java.util.Locale.ROOT)
-        .normalize(java.text.Normalizer.Form.NFKC)
+    private fun normalize(text: String): String = java.text.Normalizer
+        .normalize(text.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFKC)
         .replace(punct, " ")
         .replace(Regex("\\s+"), " ")
         .trim()
@@ -95,7 +94,7 @@ object FastCommandRouter {
             "OPEN_SETTINGS" -> if (launch(app, Intent(Settings.ACTION_SETTINGS))) "Settings khule dilam." else "Settings khola gelo na."
             "OPEN_WIFI_SETTINGS" -> if (launch(app, Intent(Settings.ACTION_WIFI_SETTINGS))) "WiFi settings khule dilam." else "WiFi settings khola gelo na."
             "OPEN_BLUETOOTH_SETTINGS" -> if (launch(app, Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) "Bluetooth settings khule dilam." else "Bluetooth settings khola gelo na."
-            "OPEN_BATTERY_SETTINGS" -> if (launch(app, Intent(Intent.ACTION_BATTERY_SAVER_SETTINGS))) "Battery settings khule dilam." else "Battery settings khola gelo na."
+            "OPEN_BATTERY_SETTINGS" -> if (launch(app, )) "Battery settings khule dilam." else "Battery settings khola gelo na."
             "OPEN_NOTIFICATIONS" -> "Android er security rule e notification shade direct khola jay na, Sir."
             "BACK" -> "Back action er jonno Android e Accessibility permission lagbe - Settings > Accessibility > Jarvis on koro."
             "RECENT_APPS" -> "Recent apps er jonno Accessibility permission lagbe - Settings > Accessibility > Jarvis on koro."
@@ -118,7 +117,7 @@ object FastCommandRouter {
             "BATTERY_STATUS" -> {
                 val bm = app.getSystemService(android.content.Context.BATTERY_SERVICE) as BatteryManager
                 val pct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-                val status = app.registerReceiver(null, Intent(Intent.ACTION_BATTERY_CHANGED))
+                val status = app.registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED))
                 val charging = status?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING
                 "Battery $pct percent ${if (charging) "ache ar charge hocche" else "ache"}, Sir."
             }
