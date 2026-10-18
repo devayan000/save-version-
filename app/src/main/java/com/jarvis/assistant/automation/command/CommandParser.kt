@@ -534,6 +534,24 @@ object CommandParser {
             return ParsedCommandResult(JarvisCommand.LockPhone, 1.0f, "LOCK_PHONE")
         }
 
+        // 10c-2. DEV STYLE: mic control - "mic off", "mike band koro", "mic on", "unmute mic"
+        if (clean.matches(Regex("$prefix(?:mic|mike|microphone)\\s*(?:off|mute|band|bondho|of)(?:\\s*(?:koro|kardo|kar\\s*do|kore\\s*d?ao))?$", RegexOption.IGNORE_CASE)) ||
+            clean.matches(Regex("$prefix(?:turn|switch)\\s+(?:the\\s+)?(?:mic|mike|microphone)\\s*(?:off|mute|band|bondho)$", RegexOption.IGNORE_CASE)) ||
+            clean.matches(Regex("$prefix(?:mute|band|bondho)(?:\\s+the)?\\s+(?:mic|mike|microphone)(?:\\s*(?:koro|kardo))?$", RegexOption.IGNORE_CASE))) {
+            return ParsedCommandResult(JarvisCommand.MicOff, 0.98f, "MIC_OFF")
+        }
+        if (clean.matches(Regex("$prefix(?:mic|mike|microphone)\\s*(?:on|unmute|chalu)(?:\\s*(?:koro|kardo|kar\\s*do|kore\\s*d?ao))?$", RegexOption.IGNORE_CASE)) ||
+            clean.matches(Regex("$prefix(?:turn|switch)\\s+(?:the\\s+)?(?:mic|mike|microphone)\\s*(?:on|unmute|chalu)$", RegexOption.IGNORE_CASE)) ||
+            clean.matches(Regex("$prefix(?:unmute)(?:\\s+the)?\\s+(?:mic|mike|microphone)(?:\\s*(?:koro|kardo))?$", RegexOption.IGNORE_CASE))) {
+            return ParsedCommandResult(JarvisCommand.MicOn, 0.98f, "MIC_ON")
+        }
+
+        // 10c-3. DEV STYLE: phone shutdown - "shutdown my phone", "phone off koro" (locks + screen off)
+        if (clean.matches(Regex("$prefix(?:shutdown|shut\\s*down|switch\\s*off|power\\s*off|power\\s*down|turn\\s*off)\\s+(?:my\\s+|the\\s+)?(?:phone|device|mobile)$", RegexOption.IGNORE_CASE)) ||
+            clean.matches(Regex("$prefix(?:phone|mobile|device)\\s+(?:ta\\s+)?(?:shutdown|shut\\s*down|switch\\s*off|power\\s*off|off|band)(?:\\s*(?:koro|kardo|kar\\s*do|kore\\s*d?ao))?$", RegexOption.IGNORE_CASE))) {
+            return ParsedCommandResult(JarvisCommand.ShutdownPhone, 0.97f, "SHUTDOWN_PHONE")
+        }
+
         // 10d. On-Guard (thief watch) toggle - "phone ongur e jao", "on guard mode on/off"
         if (Regex("\\b(?:on[\\s-]*(?:guard|gurd|gard|god)|onguard|ongurd|ongur|ongard|ongod|ungur)\\b", RegexOption.IGNORE_CASE).containsMatchIn(clean)) {
             val isOff = Regex("\\b(off|bondho|band|stop|off\\s+koro|bond\\s+koro)\\b", RegexOption.IGNORE_CASE).containsMatchIn(clean)
