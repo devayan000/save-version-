@@ -182,7 +182,8 @@
             android:stopWithTask="false"
             android:foregroundServiceType="microphone|mediaPlayback|mediaProjection" />
 
-        <service
+            <service android:name=".ui.lighting.EdgeLightingService" android:exported="false" />
+<service
             android:name=".security.ThiefGuardService"
             android:exported="false"
             android:foregroundServiceType="camera" />
