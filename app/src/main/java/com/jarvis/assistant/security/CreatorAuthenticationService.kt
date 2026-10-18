@@ -14,22 +14,26 @@ object CreatorAuthenticationService {
     private const val KEY_IS_CREATOR = "is_creator_verified"
     private const val KEY_VERIFIED_AT = "creator_verified_at"
 
+    private fun normalizeKey(value: String): String = value.trim()
+        .lowercase(java.util.Locale.ROOT)
+        .filter { it.isLetterOrDigit() }
+
     fun verify(ctx: Context, key: String): Boolean {
-        val provided = key.trim()
-        val expected = DEV_CREATOR_KEY
-        if (provided.length != expected.length) return false
-        var result = 0
-        for (i in expected.indices) {
-            result = result or (provided[i].code xor expected[i].code)
-        }
-        val valid = result == 0
-        if (valid) {
-            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-                .putBoolean(KEY_IS_CREATOR, true)
-                .putLong(KEY_VERIFIED_AT, System.currentTimeMillis())
-                .apply()
-        }
+        val valid = normalizeKey(key) == normalizeKey(DEV_CREATOR_KEY)
+        if (valid) markCreatorVerified(ctx)
         return valid
+    }
+
+    /** DEV STYLE: master-key recognition in chat also unlocks the creator console and premium. */
+    fun markCreatorVerified(ctx: Context) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_IS_CREATOR, true)
+            .putLong(KEY_VERIFIED_AT, System.currentTimeMillis())
+            .apply()
+        ctx.getSharedPreferences("jarvis_premium", Context.MODE_PRIVATE).edit()
+            .putBoolean("premium_validated", true)
+            .putString("premium_features", "all")
+            .apply()
     }
 
     fun isCreator(ctx: Context): Boolean =
