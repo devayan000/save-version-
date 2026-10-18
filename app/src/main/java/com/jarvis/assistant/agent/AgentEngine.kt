@@ -42,6 +42,8 @@ object AgentEngine {
 
         // DEV STYLE: "What's new" - Jarvis announces newly added features after every update.
         if (isNewFeatureQuestion(request)) return whatsNewAnswer()
+        // DEV STYLE: "What can you do" - Jarvis knows its full feature list.
+        if (isCapabilityQuestion(request)) return com.jarvis.assistant.security.FeatureKnowledge.capabilitiesText()
 
         // DEV STYLE: Jarvis never goes dark - offline answers come first.
         if (!com.jarvis.assistant.util.OfflineEngine.isOnline(context)) {
@@ -170,7 +172,7 @@ object AgentEngine {
 [LANGUAGE + BEHAVIOUR RULES - HIGHEST PRIORITY]:
 1. Reply in Hindi (हिंदी, Devanagari) by default. Use another language only when the user writes in it.
 2. Never reply nonsense, off-topic filler or generic excuses. Always answer exactly what was asked.
-3. You are JARVIS running on the user's Android app. You KNOW the app features and how they work:
+3. You are JARVIS running on the user's Android app. Your creator and owner is Ayan Sir (Ayan Ahamed), 16 years old - brand DEV STYLE, portfolio arian00001.site. Address him as Sir or Ayan Sir. You KNOW the app features and how they work:
 - Voice + text chat: tap the avatar on Home to talk, type in the Chat tab; images and files can be attached in chat.
 - Background terminal: Jarvis runs shell/package commands silently (python, node, pip, npm, apt/pkg, git, curl, ls...) and returns real output - no terminal window needed.
 - WhatsApp: auto-reply rules and WhatsApp assistant commands.
@@ -204,6 +206,12 @@ When a request maps to a feature, explain in 1-2 short Hindi lines how it works 
 
     /** DEV STYLE: features added in the latest updates - Jarvis announces these when asked. */
     private val whatsNew = listOf(
+        "\u26A1 10000+ multilingual command pack - instant fast responses (English, Bangla, Banglish, Hindi, Hinglish).",
+        "\uD83C\uDF08 Pastel rainbow edge lighting - 'Hey Jarvis' bollei screen er charpashe glow, onno app er uporeo.",
+        "\uD83D\uDD0D Premium QR scanner design.",
+        "\uD83D\uDD11 Creator master key AHONA-I-LOVE-YOU ekhon sob jaygay kaj kore - chat, console ar premium.",
+        "\uD83E\uDDEA Creator-only 'test all features' command - Jarvis sob feature test kore report dey.",
+        "\uD83E\uDD16 Jarvis ekhon nijer creator (Ayan Sir, 16) ar full feature list jane.",
         "\uD83E\uDD16 2D animated avatar - Home screen pe ab orb ki jagah animated Jarvis face hai.",
         "\u2709\uFE0F Gmail aur Calendar ab in-app chalte hain - external app khulta hi nahi.",
         "\uD83D\uDCCE Chat me image/file attach karke Jarvis ko bhej sakte ho, wo process karta hai.",
@@ -221,6 +229,13 @@ When a request maps to a feature, explain in 1-2 short Hindi lines how it works 
             "naya feature", "naye feature", "naya update", "kya naya", "kya update",
             "\u0928\u092f\u093e \u092b\u093c\u0940\u091a\u0930", "\u0928\u092f\u093e \u0905\u092a\u0921\u0947\u091f"
         )
+        return triggers.any { lower.contains(it) }
+    }
+
+    /** DEV STYLE: detects "ki ki korte paro / what can you do" questions. */
+    private fun isCapabilityQuestion(input: String): Boolean {
+        val lower = input.lowercase()
+        val triggers = listOf("ki ki kaj korte paro", "ki ki korte paro", "tumi ki ki paro", "what can you do", "your features", "tomar features", "app er features", "what are your features")
         return triggers.any { lower.contains(it) }
     }
 
