@@ -38,6 +38,11 @@ sealed class JarvisCommand {
 
     object LockPhone : JarvisCommand()
 
+    // DEV STYLE: mic control + phone shutdown ("mic off", "shutdown my phone")
+    object MicOn : JarvisCommand()
+    object MicOff : JarvisCommand()
+    object ShutdownPhone : JarvisCommand()
+
     data class ToggleOnGuard(val enable: Boolean) : JarvisCommand()
 
     // DEV STYLE: owner identity, skill lab and parallel-universe planning
