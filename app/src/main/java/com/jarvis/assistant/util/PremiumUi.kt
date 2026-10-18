@@ -1,0 +1,65 @@
+package com.jarvis.assistant.util
+
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.widget.Button
+
+/**
+ * DEV STYLE: shared premium styling for the programmatic screens
+ * (Photo Memory, Browser Agent, Share to Jarvis, Control Center).
+ * Deep violet gradient pills with white text for primary actions,
+ * soft lavender pills for secondary actions.
+ */
+object PremiumUi {
+
+    // Pastel rainbow palette (same colors as the edge lighting).
+    val PASTEL = intArrayOf(
+        0xFFFF9DAD.toInt(), 0xFFFFD0C2.toInt(), 0xFFFFF3A6.toInt(),
+        0xFFA8F2D0.toInt(), 0xFF91E8F5.toInt(), 0xFF9BCBFF.toInt(),
+        0xFFD5A6FF.toInt()
+    )
+
+    private const val VIOLET_DARK = 0xFF5B4B8A
+    private const val VIOLET = 0xFF8B5CF6
+    private const val LAVENDER_SOFT = 0xFFF3F0FF
+    private const val TEXT_VIOLET = 0xFF4C3D75
+
+    /** Primary action: deep gradient pill, white bold text. */
+    fun premiumButton(b: Button) {
+        val gd = GradientDrawable()
+        gd.shape = GradientDrawable.RECTANGLE
+        gd.cornerRadius = 28f
+        gd.colors = intArrayOf(VIOLET_DARK.toInt(), VIOLET.toInt())
+        gd.orientation = GradientDrawable.Orientation.LEFT_RIGHT
+        b.background = gd
+        b.setTextColor(Color.WHITE)
+        b.isAllCaps = true
+        b.letterSpacing = 0.08f
+        b.typeface = Typeface.DEFAULT_BOLD
+        b.textSize = 13f
+        b.setPadding(dp(22), dp(13), dp(22), dp(13))
+        b.minimumHeight = dp(44)
+        b.isSoundEffectsEnabled = false
+    }
+
+    /** Secondary action: soft lavender pill with violet text. */
+    fun secondaryButton(b: Button) {
+        val gd = GradientDrawable()
+        gd.shape = GradientDrawable.RECTANGLE
+        gd.cornerRadius = 28f
+        gd.setColor(LAVENDER_SOFT.toInt())
+        gd.setStroke(dp(2), VIOLET.toInt())
+        b.background = gd
+        b.setTextColor(TEXT_VIOLET.toInt())
+        b.isAllCaps = true
+        b.letterSpacing = 0.08f
+        b.typeface = Typeface.DEFAULT_BOLD
+        b.textSize = 13f
+        b.setPadding(dp(22), dp(13), dp(22), dp(13))
+        b.minimumHeight = dp(44)
+        b.isSoundEffectsEnabled = false
+    }
+
+    private fun dp(v: Int): Int = (v * 1.5f).toInt()
+}
