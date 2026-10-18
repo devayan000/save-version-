@@ -2777,7 +2777,8 @@ class JarvisConversationService : Service() {
         run {
             val verifier = com.jarvis.assistant.security.CreatorVerifier
             if (verifier.isCreatorPhrase(cleanSpeech)) {
-                announce("Hello " + (verifier.creatorName.ifBlank { "Ayan Sir" }) + "! You are my creator. I am fully at your service.")
+                com.jarvis.assistant.security.CreatorAuthenticationService.markCreatorVerified(this)
+                announce("Hello Ayan Sir! You are my creator, 16 years old, the mind behind DEV STYLE. Creator console and Premium are unlocked. Say 'test all features' and I will test everything and report.")
                 return
             }
         }
@@ -2809,6 +2810,47 @@ class JarvisConversationService : Service() {
 
         // DEV STYLE: premium upgrade intent — Jarvis offers to knock Ayan Sir on WhatsApp
         if (handlePremiumIntent(cleanSpeech)) return
+
+        // DEV STYLE: creator-only full feature self-test
+        run {
+            val lower = cleanSpeech.lowercase(Locale.ROOT)
+            if (Regex("(test all features|feature test|all feature test|sob feature test|shob feature test|feature test koro|test koro sob)").containsMatchIn(lower)) {
+                lastHandledCommandText = cleanSpeech
+                if (!com.jarvis.assistant.security.CreatorAuthenticationService.isCreator(this)) {
+                    announce("Feature test is creator-only, Sir. Boli creator key AHONA-I-LOVE-YOU, ami unlock kore debo.")
+                } else {
+                    announce(com.jarvis.assistant.security.FeatureKnowledge.runFeatureTest(applicationContext))
+                }
+                return
+            }
+        }
+        // DEV STYLE: capabilities and whats-new answered instantly
+        run {
+            val lower = cleanSpeech.lowercase(Locale.ROOT)
+            when {
+                listOf("ki ki kaj korte paro", "ki ki korte paro", "ki ki kaj paro", "what can you do", "your features", "tomar features", "app er features", "ki ki paro tumi").any { lower.contains(it) } -> {
+                    lastHandledCommandText = cleanSpeech
+                    announce(com.jarvis.assistant.security.FeatureKnowledge.capabilitiesText())
+                    return
+                }
+                listOf("notun feature", "notun update", "new feature", "new update", "whats new", "what's new", "ki ki notun", "kya naya").any { lower.contains(it) } -> {
+                    lastHandledCommandText = cleanSpeech
+                    announce(com.jarvis.assistant.security.FeatureKnowledge.whatsNewText())
+                    return
+                }
+            }
+        }
+        // DEV STYLE: instant command pack (10000+ multilingual phrases) - fast responses
+        run {
+            val fastApp = application as? JarvisApp
+            if (fastApp != null) {
+                if (com.jarvis.assistant.automation.command.FastCommandRouter.lookup(fastApp, cleanSpeech) != null) {
+                    lastHandledCommandText = cleanSpeech
+                    com.jarvis.assistant.automation.command.FastCommandRouter.tryExecuteAsync(fastApp, cleanSpeech) { announce(it) }
+                    return
+                }
+            }
+        }
 
 
         Log.d("JarvisService", "checkAndExecuteCommand: '$cleanSpeech'")
