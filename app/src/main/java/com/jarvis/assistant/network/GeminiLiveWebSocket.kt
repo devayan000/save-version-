@@ -145,6 +145,14 @@ class GeminiLiveWebSocket(
                                 return
                             }
                         }
+                        // DEV STYLE: transient aborts/timeouts must not pop the red error card - reconnect quietly.
+                        val isTransientAbort = reason.isBlank() || reason.contains("abort", ignoreCase = true) || reason.contains("timeout", ignoreCase = true)
+                        if (isTransientAbort) {
+                            Log.w(TAG, "Transient Gemini close ($code, $reason) - reconnecting quietly")
+                            listener.onConnectionStateChanged("RECONNECTING...")
+                            scheduleReconnect()
+                            return
+                        }
                         listener.onError("Gemini setup was rejected: $reason", isFatal = true, errorCode = "SETUP_REJECTED")
                         listener.onConnectionStateChanged("OFFLINE")
                     } else if (!isManuallyStopped.get()) {
