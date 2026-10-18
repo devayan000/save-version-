@@ -98,6 +98,19 @@ class CommandExecutor(
             is JarvisCommand.SkillLab -> com.jarvis.assistant.agent.skills.SkillEvolutionLab.labReport()
             is JarvisCommand.PlanGoal -> com.jarvis.assistant.agent.planning.ParallelUniversePlanner.report(command.goal)
             is JarvisCommand.LockPhone -> phoneManager.lockPhone()
+            is JarvisCommand.ShutdownPhone -> phoneManager.lockPhone()
+            is JarvisCommand.MicOff -> {
+                val app = com.jarvis.assistant.JarvisApp.instance
+                app.preferences.isMicMuted = true
+                com.jarvis.assistant.background.JarvisConversationService.setMicMuted(true)
+                "Microphone off. Typed commands still work - tap the mic to talk again."
+            }
+            is JarvisCommand.MicOn -> {
+                val app = com.jarvis.assistant.JarvisApp.instance
+                app.preferences.isMicMuted = false
+                com.jarvis.assistant.background.JarvisConversationService.setMicMuted(false)
+                "Microphone on. I am listening again."
+            }
             is JarvisCommand.ToggleOnGuard -> toggleOnGuard(command.enable)
         }
     }
