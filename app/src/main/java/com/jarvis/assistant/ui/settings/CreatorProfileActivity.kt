@@ -36,7 +36,8 @@ class CreatorProfileActivity : AppCompatActivity() {
             if (column != null) {
                 val analyzerButton = MaterialButton(this)
                 analyzerButton.text = "REPOSITORY ANALYZER - paste a GitHub link, I analyze the full code"
-                analyzerButton.isAllCaps = true
+                com.jarvis.assistant.util.PremiumUi.premiumButton(analyzerButton)
+                analyzerButton.isAllCaps = false
                 analyzerButton.setOnClickListener {
                     startActivity(Intent(this, com.jarvis.assistant.developer.CreatorRepoActivity::class.java))
                 }
@@ -131,6 +132,7 @@ class CreatorProfileActivity : AppCompatActivity() {
             card.addView(keyInput)
             card.addView(MaterialButton(this).apply {
                 text = "Verify creator key"
+                com.jarvis.assistant.util.PremiumUi.premiumButton(this)
                 setOnClickListener {
                     if (CreatorAuthenticationService.verify(this@CreatorProfileActivity, keyInput.text.toString().trim())) {
                         Toast.makeText(this@CreatorProfileActivity, "Creator verified - bug console unlocked.", Toast.LENGTH_LONG).show()
@@ -150,6 +152,7 @@ class CreatorProfileActivity : AppCompatActivity() {
             })
             card.addView(MaterialButton(this).apply {
                 text = "View bugs, errors & improvements"
+                com.jarvis.assistant.util.PremiumUi.premiumButton(this)
                 setOnClickListener {
                     if (bugs.isEmpty()) {
                         Toast.makeText(this@CreatorProfileActivity, "No bugs detected yet.", Toast.LENGTH_SHORT).show()
