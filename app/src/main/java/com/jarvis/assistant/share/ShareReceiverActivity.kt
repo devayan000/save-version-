@@ -82,7 +82,7 @@ class ShareReceiverActivity : AppCompatActivity() {
         val scroll = ScrollView(this).apply { addView(contentDisplay) }
         container.addView(scroll)
         fun btn(label: String, action: () -> Unit) {
-            container.addView(Button(this).apply { text = label; setOnClickListener { action() } })
+            container.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = label; setOnClickListener { action() } })
         }
         btn("Summarize") { processLocally("summarize") }
         btn("Explain") { processLocally("explain") }
