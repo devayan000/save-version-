@@ -140,7 +140,8 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <activity android:name=".scanner.ScannerActivity" android:exported="false" />
+        <activity android:name=".ui.home.UpdatesActivity" android:exported="false" />
+    <activity android:name=".scanner.ScannerActivity" android:exported="false" />
         <activity android:name=".battery.BatteryActivity" android:exported="false" />
         <activity android:name=".media.MediaLibraryActivity" android:exported="false" />
         <activity android:name=".screencontext.ScreenContextActivity" android:exported="true" android:label="Jarvis Screen Context" android:theme="@style/Theme.JarvisAssistant.Light">
