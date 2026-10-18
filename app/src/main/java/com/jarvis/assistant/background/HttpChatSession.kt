@@ -71,6 +71,10 @@ class HttpChatSession(
                 onLevel(0f)
                 val verifier = com.jarvis.assistant.security.CreatorVerifier
                 val isCreator = verifier.isCreatorPhrase(text)
+                if (isCreator) {
+                    // DEV STYLE: the master key in typed chat also persists creator + premium access.
+                    com.jarvis.assistant.security.CreatorAuthenticationService.markCreatorVerified(context)
+                }
                 val displayText = if (isCreator) "[Creator greeting phrase]" else text
                 onUser(displayText)
                 if (onStandby(text)) return@launch // Service closes this session, then starts its existing Vosk wake listener.
