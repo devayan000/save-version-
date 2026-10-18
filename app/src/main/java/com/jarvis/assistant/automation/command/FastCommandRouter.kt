@@ -47,8 +47,16 @@ object FastCommandRouter {
         }
     }
 
-    fun lookup(context: android.content.Context, rawText: String): String? =
-        ensureLoaded(context)[normalize(rawText)]
+    fun lookup(context: android.content.Context, rawText: String): String? {
+        val phrase = ensureLoaded(context)[normalize(rawText)]
+        if (phrase != null) return phrase
+        // Keyword fallback for phrasings missing from the asset pack
+        val t = normalize(rawText)
+        val notLock = Regex("(un|re)?lock|clock|locket|block").containsMatchIn(t)
+        if (!notLock && Regex("lock|lauk|তালা|লক").containsMatchIn(t)) return "LOCK_SCREEN"
+        if (Regex("screenshot|screen shot|screen capture|skrinsot|skrin shot|স্ক্রিনশট|স্ক্রিন ক্যাপচার").containsMatchIn(t)) return "SCREENSHOT"
+        return null
+    }
 
     /** Non-suspend entry for the conversation service: runs on main and calls back with the reply. */
     fun tryExecuteAsync(app: JarvisApp, rawText: String, onReply: (String) -> Unit) {
@@ -88,7 +96,10 @@ object FastCommandRouter {
             "OPEN_PHONE" -> executor.execute(JarvisCommand.OpenApp("com.google.android.dialer"))
             "OPEN_FILES" -> executor.execute(JarvisCommand.OpenApp("com.google.android.apps.nbu.files"))
             "OPEN_MUSIC" -> executor.execute(JarvisCommand.OpenApp("com.google.android.apps.youtube.music"))
-            "SCREENSHOT" -> "Screenshot Android er security policy er karone direct API diye chalano jay na, Sir."
+            "SCREENSHOT" -> {
+                val shot = Intent(app, com.jarvis.assistant.vision.ScreenToolsActivity::class.java).putExtra("mode", "screenshot")
+                if (launch(app, shot)) "Screenshot nicchi, Sir — Android er ek consent dilam niyo, 'Allow' chapun." else "Screenshot shuru kora gelo na, Sir."
+            }
             "GO_HOME" -> if (launch(app, Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))) "Home e niye gelam, Sir." else "Home e jete pari nai."
             "OPEN_CAMERA" -> if (launch(app, Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))) "Camera khule dilam, Sir." else "Camera khola gelo na."
             "OPEN_SETTINGS" -> if (launch(app, Intent(Settings.ACTION_SETTINGS))) "Settings khule dilam." else "Settings khola gelo na."
