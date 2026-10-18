@@ -94,7 +94,7 @@ object FastCommandRouter {
             "OPEN_SETTINGS" -> if (launch(app, Intent(Settings.ACTION_SETTINGS))) "Settings khule dilam." else "Settings khola gelo na."
             "OPEN_WIFI_SETTINGS" -> if (launch(app, Intent(Settings.ACTION_WIFI_SETTINGS))) "WiFi settings khule dilam." else "WiFi settings khola gelo na."
             "OPEN_BLUETOOTH_SETTINGS" -> if (launch(app, Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) "Bluetooth settings khule dilam." else "Bluetooth settings khola gelo na."
-            "OPEN_BATTERY_SETTINGS" -> if (launch(app, Intent(Intent.ACTION_BATTERY_SAVER_SETTINGS))) "Battery settings khule dilam." else "Battery settings khola gelo na."
+            "OPEN_BATTERY_SETTINGS" -> if (launch(app, Intent("android.settings.BATTERY_SAVER_SETTINGS"))) "Battery settings khule dilam." else "Battery settings khola gelo na."
             "OPEN_NOTIFICATIONS" -> "Android er security rule e notification shade direct khola jay na, Sir."
             "BACK" -> "Back action er jonno Android e Accessibility permission lagbe - Settings > Accessibility > Jarvis on koro."
             "RECENT_APPS" -> "Recent apps er jonno Accessibility permission lagbe - Settings > Accessibility > Jarvis on koro."
