@@ -263,7 +263,7 @@ class JarvisConversationService : Service() {
                     target.serviceScope.launch(Dispatchers.Main.immediate) {
                         try {
                             val result = JarvisApp.instance.commandExecutor.execute(quickCmd)
-                            target._events.emit(result)
+                            _events.emit(result)
                             JarvisApp.instance.chatRepository.addTurn(text, result)
                         } catch (e: Exception) {
                             Log.e("JarvisService", "Quick command failed: ${e.message}")
