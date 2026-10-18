@@ -44,7 +44,7 @@ class EdgeLightingView(context: Context) : View(context) {
         running = run
         if (run) {
             lastFrame = 0L
-            postInvalidateOnAnimation(this)
+            postInvalidateOnAnimation()
         }
     }
 
@@ -90,7 +90,7 @@ class EdgeLightingView(context: Context) : View(context) {
                 phase = (phase + 0.9f) % 360f
                 lastFrame = now
             }
-            postInvalidateOnAnimation(this)
+            postInvalidateOnAnimation()
         }
     }
 }
