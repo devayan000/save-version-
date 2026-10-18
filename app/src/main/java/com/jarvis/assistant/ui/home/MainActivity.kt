@@ -46,7 +46,6 @@ class MainActivity : AppCompatActivity() {
     private val homeFragment by lazy { HomeFragment() }
     private val chatFragment by lazy { ChatFragment() }
     private val settingsFragment by lazy { SettingsFragment() }
-    private val updatesFragment by lazy { UpdatesFragment() }
 
     private val requestAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -191,18 +190,18 @@ class MainActivity : AppCompatActivity() {
             trans.commitNowAllowingStateLoss()
         }
 
-        // Add all 4 fragments fresh into container
+        // DEV STYLE: 3 dock tabs + mic (the old Updates tab is now a scanner action,
+        // and App Updates moved into Settings).
+        if (currentTab == TAB_UPDATES) currentTab = TAB_HOME
         val trans = supportFragmentManager.beginTransaction()
             .add(R.id.fragmentContainer, homeFragment, "TAB_0")
             .add(R.id.fragmentContainer, chatFragment, "TAB_1")
             .add(R.id.fragmentContainer, settingsFragment, "TAB_2")
-            .add(R.id.fragmentContainer, updatesFragment, "TAB_3")
 
         val allTabs = listOf(
             TAB_HOME to homeFragment,
             TAB_CHAT to chatFragment,
-            TAB_SETTINGS to settingsFragment,
-            TAB_UPDATES to updatesFragment
+            TAB_SETTINGS to settingsFragment
         )
 
         allTabs.forEach { (tabId, frag) ->
@@ -253,7 +252,10 @@ class MainActivity : AppCompatActivity() {
         binding.tabHome.setOnClickListener { selectTab(TAB_HOME) }
         binding.tabChat.setOnClickListener { selectTab(TAB_CHAT) }
         binding.tabSettings.setOnClickListener { selectTab(TAB_SETTINGS) }
-        binding.tabUpdates.setOnClickListener { selectTab(TAB_UPDATES) }
+        // DEV STYLE: the dock spot now opens the QR/barcode scanner; Updates lives in Settings.
+        binding.tabUpdates.setOnClickListener {
+            startActivity(android.content.Intent(this, com.jarvis.assistant.scanner.ScannerActivity::class.java))
+        }
 
         binding.tabMic.setOnClickListener {
             handleMicOrOrbClick()
@@ -272,8 +274,7 @@ class MainActivity : AppCompatActivity() {
         val tabs = listOf(
             TAB_HOME to homeFragment,
             TAB_CHAT to chatFragment,
-            TAB_SETTINGS to settingsFragment,
-            TAB_UPDATES to updatesFragment
+            TAB_SETTINGS to settingsFragment
         )
 
         val trans = supportFragmentManager.beginTransaction()
