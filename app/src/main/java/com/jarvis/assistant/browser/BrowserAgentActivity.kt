@@ -57,7 +57,7 @@ class BrowserAgentActivity : AppCompatActivity() {
         val urlRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         urlBar = EditText(this).apply { hint = "Search or enter URL"; setSingleLine(); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) }
         urlRow.addView(urlBar)
-        urlRow.addView(Button(this).apply { text = "Go"; setOnClickListener { handleUrlInput(urlBar.text.toString().trim()) } })
+        urlRow.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Go"; setOnClickListener { handleUrlInput(urlBar.text.toString().trim()) } })
         container.addView(urlRow)
 
         statusText = TextView(this).apply { text = "Enter a URL or search query"; textSize = 13f; setPadding(0, 8, 0, 8) }
@@ -94,10 +94,10 @@ class BrowserAgentActivity : AppCompatActivity() {
         container.addView(pageContent)
 
         val btnRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        btnRow.addView(Button(this).apply { text = "Login Help"; setOnClickListener { showLoginHelp() } })
-        btnRow.addView(Button(this).apply { text = "Fill Form"; setOnClickListener { showFillFormDialog() } })
-        btnRow.addView(Button(this).apply { text = "Clear Data"; setOnClickListener { clearBrowsingData() } })
-        btnRow.addView(Button(this).apply { text = "Close"; setOnClickListener { finish() } })
+        btnRow.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Login Help"; setOnClickListener { showLoginHelp() } })
+        btnRow.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Fill Form"; setOnClickListener { showFillFormDialog() } })
+        btnRow.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Clear Data"; setOnClickListener { clearBrowsingData() } })
+        btnRow.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Close"; setOnClickListener { finish() } })
         container.addView(btnRow)
 
         setContentView(container)
