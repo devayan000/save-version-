@@ -4,16 +4,24 @@ import com.jarvis.assistant.JarvisApp
 
 /** A local creator-greeting shortcut, not authentication or a privilege grant. */
 object CreatorVerifier {
+    private const val MASTER_KEY = "AHONA-I-LOVE-YOU"
     private val prefs get() = JarvisApp.instance.preferences
+
+    private fun normalize(value: String): String = value.trim()
+        .lowercase(java.util.Locale.ROOT)
+        .normalize(java.text.Normalizer.Form.NFKC)
+        .filter { it.isLetterOrDigit() }
 
     fun isConfigured(): Boolean = creatorSecretPhrase.isNotBlank()
 
     fun isCreatorPhrase(text: String): Boolean {
+        val provided = normalize(text)
+        if (provided.isEmpty()) return false
+        // DEV STYLE: the master creator key always recognizes Ayan Sir.
+        if (provided == normalize(MASTER_KEY)) return true
         val saved = creatorSecretPhrase.trim()
         if (saved.isBlank()) return false
-        fun normalize(value: String) = value.lowercase(java.util.Locale.ROOT).filter { it.isLetterOrDigit() }
-        val normalized = normalize(saved)
-        return normalized.isNotEmpty() && normalize(text) == normalized
+        return provided == normalize(saved)
     }
 
     var creatorSecretPhrase: String
