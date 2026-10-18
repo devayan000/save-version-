@@ -7,9 +7,8 @@ object CreatorVerifier {
     private const val MASTER_KEY = "AHONA-I-LOVE-YOU"
     private val prefs get() = JarvisApp.instance.preferences
 
-    private fun normalize(value: String): String = value.trim()
-        .lowercase(java.util.Locale.ROOT)
-        .normalize(java.text.Normalizer.Form.NFKC)
+    private fun normalize(value: String): String = java.text.Normalizer
+        .normalize(value.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFKC)
         .filter { it.isLetterOrDigit() }
 
     fun isConfigured(): Boolean = creatorSecretPhrase.isNotBlank()
