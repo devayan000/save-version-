@@ -23,6 +23,9 @@ object FastCommandRouter {
 
     private val punct = Regex("[\\p{Punct}\\u0964]")
 
+    // Filler words stripped when extracting a YouTube search query.
+    private val mediaNoise = Regex("\\b(youtube|yt|video|videos|reel|play|playing|chalao|chalau|chalu|kor|koro|kore|dao|dibo|dekhao|dekha|dekho|dekhun|shonao|shono|shuni|shon|sune|sun|gao|gaao|gaan|gaana|gana|song|songs|music|please|plz|karo|kar|theke|amar|my|now|eta|oi)\\b")
+
     private fun normalize(text: String): String = java.text.Normalizer
         .normalize(text.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFKC)
         .replace(punct, " ")
@@ -55,6 +58,10 @@ object FastCommandRouter {
         val notLock = Regex("(un|re)?lock|clock|locket|block").containsMatchIn(t)
         if (!notLock && Regex("lock|lauk|তালা|লক").containsMatchIn(t)) return "LOCK_SCREEN"
         if (Regex("screenshot|screen shot|screen capture|skrinsot|skrin shot|স্ক্রিনশট|স্ক্রিন ক্যাপচার").containsMatchIn(t)) return "SCREENSHOT"
+        // Social video: play YouTube / open Instagram (watch & listen)
+        val watch = Regex("video|videos|reel|dekh|play|playing|chal|shon|shun|sune|gao|gaan|song|music|watch|open|khul").containsMatchIn(t)
+        if (Regex("\\b(youtube|yt)\\b").containsMatchIn(t) && watch) return "PLAY_YOUTUBE"
+        if (Regex("\\binstagram\\b|\\binsta\\b|\\breel\\b").containsMatchIn(t) && watch) return "OPEN_INSTAGRAM"
         return null
     }
 
@@ -62,7 +69,7 @@ object FastCommandRouter {
     fun tryExecuteAsync(app: JarvisApp, rawText: String, onReply: (String) -> Unit) {
         val action = lookup(app, rawText) ?: return
         CoroutineScope(Dispatchers.Main).launch {
-            onReply(executeAction(app, action))
+            onReply(executeAction(app, action, rawText))
         }
     }
 
@@ -72,7 +79,7 @@ object FastCommandRouter {
         true
     }.getOrDefault(false)
 
-    suspend fun executeAction(app: JarvisApp, action: String): String = withContext(Dispatchers.Main) {
+    suspend fun executeAction(app: JarvisApp, action: String, rawText: String = ""): String = withContext(Dispatchers.Main) {
         val executor = app.commandExecutor
         when (action) {
             "FLASH_ON" -> executor.execute(JarvisCommand.Flash(true))
@@ -131,6 +138,22 @@ object FastCommandRouter {
                 val status = app.registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED))
                 val charging = status?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING
                 "Battery $pct percent ${if (charging) "ache ar charge hocche" else "ache"}, Sir."
+            }
+            "PLAY_YOUTUBE" -> {
+                val query = rawText.trim().replace(mediaNoise, " ").replace(Regex("\\s+"), " ").trim()
+                if (query.isBlank()) {
+                    val yt = app.packageManager.getLaunchIntentForPackage("com.google.android.youtube")
+                        ?: Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com"))
+                    if (launch(app, yt)) "YouTube khule dilam, Sir." else "YouTube khola gelo na, Sir."
+                } else app.youTubeAutomationManager.playVideo(query)
+            }
+            "OPEN_INSTAGRAM" -> {
+                val url = Regex("https?://\\S+").find(rawText)?.value
+                val intent = if (url != null && url.contains("instagram.com"))
+                    Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                else app.packageManager.getLaunchIntentForPackage("com.instagram.android")
+                    ?: Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.instagram.com"))
+                if (launch(app, intent)) "Instagram khule dilam, Sir — video dekhe shono." else "Instagram app paya gelo na, Sir."
             }
             "HELP" -> com.jarvis.assistant.security.FeatureKnowledge.capabilitiesText()
             else -> "Ei command ta ekhono map kora nei, Sir."
