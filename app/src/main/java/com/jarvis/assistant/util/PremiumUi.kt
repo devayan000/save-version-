@@ -61,5 +61,27 @@ object PremiumUi {
         b.isSoundEffectsEnabled = false
     }
 
+    /** Premium glass card surface for any container view. */
+    fun premiumCard(v: android.view.View) {
+        val gd = GradientDrawable()
+        gd.shape = GradientDrawable.RECTANGLE
+        gd.cornerRadius = 26f
+        gd.colors = intArrayOf(0xFFFDFCFF.toInt(), LAVENDER_SOFT.toInt())
+        gd.orientation = GradientDrawable.Orientation.TL_BR
+        gd.setStroke(dp(1), 0x335B4B8A)
+        v.background = gd
+        v.elevation = dp(6).toFloat()
+        v.setPadding(dp(18), dp(16), dp(18), dp(16))
+    }
+
+    /** Small-caps violet section label. */
+    fun sectionTitle(tv: android.widget.TextView) {
+        tv.setTextColor(TEXT_VIOLET.toInt())
+        tv.typeface = Typeface.DEFAULT_BOLD
+        tv.isAllCaps = true
+        tv.letterSpacing = 0.12f
+        tv.textSize = 12f
+    }
+
     private fun dp(v: Int): Int = (v * 1.5f).toInt()
 }
