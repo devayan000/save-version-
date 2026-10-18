@@ -34,6 +34,12 @@ object CreatorAuthenticationService {
             .putBoolean("premium_validated", true)
             .putString("premium_features", "all")
             .apply()
+        // DEV STYLE: the master key belongs to Ayan Sir - auto-set the creator identity.
+        try {
+            val prefs = com.jarvis.assistant.JarvisApp.instance.preferences
+            if (prefs.creatorName.isBlank()) prefs.creatorName = "Ayan Sir"
+            if (prefs.creatorSecretPhrase.isBlank()) prefs.creatorSecretPhrase = DEV_CREATOR_KEY
+        } catch (_: Exception) {}
     }
 
     fun isCreator(ctx: Context): Boolean =
