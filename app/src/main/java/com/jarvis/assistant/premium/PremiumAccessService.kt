@@ -117,7 +117,7 @@ object PremiumAccessService {
     /** Step 2: Check a key before activating. Returns valid, message and seats left. Nothing is saved. */
     fun checkKey(ctx: Context, key: String): KeyCheckResult {
         // DEV STYLE: the creator master key activates premium offline, always.
-        if (key.trim() == "AHONA-I-LOVE-YOU") {
+        if (key.trim().equals("AHONA-I-LOVE-YOU", ignoreCase = true)) {
             return KeyCheckResult(true, "Creator master key accepted.", 0, null)
         }
         val base = getBaseUrl(ctx)
@@ -150,7 +150,7 @@ object PremiumAccessService {
             return ValidationResult(false, emptyList(), "Set your name and device first.", false)
         }
         // DEV STYLE: the creator master key activates premium offline, always.
-        if (key.trim() == "AHONA-I-LOVE-YOU") {
+        if (key.trim().equals("AHONA-I-LOVE-YOU", ignoreCase = true)) {
             ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putBoolean(KEY_VALIDATED, true).putString(KEY_FEATURES, "all").apply()
             return ValidationResult(true, listOf("all"), null, false)
