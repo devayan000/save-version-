@@ -210,7 +210,7 @@
             </LinearLayout>
         </FrameLayout>
 
-        <!-- Tab 5: Updates -->
+        <!-- Tab 5: Scanner (QR / barcode) -->
         <FrameLayout
             android:id="@+id/tabUpdates"
             android:layout_width="0dp"
@@ -238,9 +238,9 @@
                         android:id="@+id/ivTabUpdates"
                         android:layout_width="22dp"
                         android:layout_height="22dp"
-                        android:src="@drawable/ic_nav_bell"
+                        android:src="@drawable/ic_nav_scan"
                         app:tint="?attr/themeTextMuted"
-                        android:contentDescription="Updates" />
+                        android:contentDescription="Scanner" />
 
                     <View
                         android:id="@+id/badgeUpdates"
@@ -255,7 +255,7 @@
                     android:id="@+id/tvTabUpdates"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Updates"
+                    android:text="Scan"
                     android:textSize="10sp"
                     android:textStyle="bold"
                     android:fontFamily="sans-serif-medium"
