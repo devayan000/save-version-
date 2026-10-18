@@ -226,40 +226,10 @@ class SettingsFragment : Fragment() {
         }
 
         binding.rowAppIdentity.setOnClickListener {
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Jarvis Control Center")
-                .setItems(arrayOf("App Identity", "Check for Updates", "Premium Access", "Creator Verification", "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings", "Share to Jarvis", "Notification Briefing", "Camera Scanner", "Battery Intelligence", "Media Library", "Screen Context", "Project Planner", "Prompt Lab", "Personality", "Photo Memory", "Browser Agent", "Decision DNA", "Debate Chamber", "Time Machine", "Failure Autopsy", "Google Workspace")) { _, which ->
-                    when (which) {
-                        0 -> MaterialAlertDialogBuilder(requireContext()).setTitle("JARVIS App Identity").setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext())).setPositiveButton("Close", null).show()
-                        1 -> showUpdateDialog()
-                        2 -> showPremiumAccessDialog()
-                        3 -> showCreatorVerificationDialog()
-                        4 -> showBugCenterDialog()
-                        5 -> showPerformanceDashboardDialog()
-                        6 -> showSingingSettingsDialog()
-                        7 -> showSearchSettingsDialog()
-                        8 -> startActivity(Intent(requireContext(), ShareReceiverActivity::class.java))
-                        9 -> startActivity(Intent(requireContext(), NotificationBriefingActivity::class.java))
-                        10 -> { if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) requestCameraLauncher.launch(android.Manifest.permission.CAMERA) else startActivity(Intent(requireContext(), ScannerActivity::class.java)) }
-                        11 -> startActivity(Intent(requireContext(), BatteryActivity::class.java))
-                        12 -> startActivity(Intent(requireContext(), MediaLibraryActivity::class.java))
-                        13 -> startActivity(Intent(requireContext(), ScreenContextActivity::class.java))
-                        14 -> startActivity(Intent(requireContext(), ProjectPlannerActivity::class.java))
-                        15 -> startActivity(Intent(requireContext(), PromptLabActivity::class.java))
-                        16 -> startActivity(Intent(requireContext(), PersonalitySettingsActivity::class.java))
-                        17 -> startActivity(Intent(requireContext(), PhotoMemoryActivity::class.java))
-                        18 -> startActivity(Intent(requireContext(), BrowserAgentActivity::class.java))
-                        19 -> startActivity(Intent(requireContext(), DecisionDnaActivity::class.java))
-                        20 -> startActivity(Intent(requireContext(), DebateActivity::class.java))
-                        21 -> startActivity(Intent(requireContext(), TimeMachineActivity::class.java))
-                        22 -> startActivity(Intent(requireContext(), FailureAutopsyActivity::class.java))
-                        23 -> startActivity(Intent(requireContext(), com.jarvis.assistant.google.GoogleWorkspaceActivity::class.java))
-                    }
-                }
-                .show()
+            showControlCenterDialog()
         }
 
-        // Social Media Community Buttons
+// Social Media Community Buttons
         binding.btnSocialTelegram.setOnClickListener {
             openUrl("https://t.me/DevStyleHQ")
         }
@@ -272,6 +242,82 @@ class SettingsFragment : Fragment() {
 
         binding.tvFooterCredit.setOnClickListener {
             openUrl("https://t.me/DevStyleHQ")
+        }
+    }
+
+    /**
+     * DEV STYLE: premium Jarvis Control Center - a custom pastel-styled list
+     * instead of the plain system dialog, including the Overlay Avatar toggle.
+     */
+    private fun showControlCenterDialog() {
+        val ctx = requireContext()
+        val actions = listOf(
+            "App Identity", "Check for Updates", "Premium Access", "Creator Verification",
+            "Bugs & Debug Center", "Performance Dashboard", "Singing Settings", "Search Settings",
+            "Share to Jarvis", "Notification Briefing", "Camera Scanner", "Battery Intelligence",
+            "Media Library", "Screen Context", "Project Planner", "Prompt Lab", "Personality",
+            "Photo Memory", "Browser Agent", "Decision DNA", "Debate Chamber", "Time Machine",
+            "Failure Autopsy", "Google Workspace", "Overlay Avatar"
+        )
+        val scroll = android.widget.ScrollView(ctx)
+        val list = android.widget.LinearLayout(ctx).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(12, 8, 12, 12)
+        }
+        val ripple = android.content.res.ColorStateList.valueOf(0x1A8B5CF6)
+        for ((i, label) in actions.withIndex()) {
+            val row = android.widget.TextView(ctx).apply {
+                text = label
+                textSize = 15.5f
+                setTextColor(0xFF2A2A2A.toInt())
+                setPadding(44, 36, 44, 36)
+                background = android.graphics.drawable.RippleDrawable(
+                    ripple,
+                    android.graphics.drawable.GradientDrawable().apply {
+                        setColor(0xFFFFFFFF.toInt())
+                        cornerRadius = 36f
+                    },
+                    null
+                )
+            }
+            row.setOnClickListener { handleControlCenterAction(i) }
+            list.addView(row)
+        }
+        scroll.addView(list)
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle("Jarvis Control Center")
+            .setView(scroll)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun handleControlCenterAction(which: Int) {
+        when (which) {
+            0 -> MaterialAlertDialogBuilder(requireContext()).setTitle("JARVIS App Identity").setMessage(com.jarvis.assistant.security.AppIdentityVerifier.report(requireContext())).setPositiveButton("Close", null).show()
+            1 -> showUpdateDialog()
+            2 -> showPremiumAccessDialog()
+            3 -> showCreatorVerificationDialog()
+            4 -> showBugCenterDialog()
+            5 -> showPerformanceDashboardDialog()
+            6 -> showSingingSettingsDialog()
+            7 -> showSearchSettingsDialog()
+            8 -> startActivity(Intent(requireContext(), ShareReceiverActivity::class.java))
+            9 -> startActivity(Intent(requireContext(), NotificationBriefingActivity::class.java))
+            10 -> { if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) requestCameraLauncher.launch(android.Manifest.permission.CAMERA) else startActivity(Intent(requireContext(), ScannerActivity::class.java)) }
+            11 -> startActivity(Intent(requireContext(), BatteryActivity::class.java))
+            12 -> startActivity(Intent(requireContext(), MediaLibraryActivity::class.java))
+            13 -> startActivity(Intent(requireContext(), ScreenContextActivity::class.java))
+            14 -> startActivity(Intent(requireContext(), ProjectPlannerActivity::class.java))
+            15 -> startActivity(Intent(requireContext(), PromptLabActivity::class.java))
+            16 -> startActivity(Intent(requireContext(), PersonalitySettingsActivity::class.java))
+            17 -> startActivity(Intent(requireContext(), PhotoMemoryActivity::class.java))
+            18 -> startActivity(Intent(requireContext(), BrowserAgentActivity::class.java))
+            19 -> startActivity(Intent(requireContext(), DecisionDnaActivity::class.java))
+            20 -> startActivity(Intent(requireContext(), DebateActivity::class.java))
+            21 -> startActivity(Intent(requireContext(), TimeMachineActivity::class.java))
+            22 -> startActivity(Intent(requireContext(), FailureAutopsyActivity::class.java))
+            23 -> startActivity(Intent(requireContext(), com.jarvis.assistant.google.GoogleWorkspaceActivity::class.java))
+            24 -> startActivity(Intent(requireContext(), OverlayAvatarActivity::class.java))
         }
     }
 
