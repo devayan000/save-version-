@@ -146,7 +146,13 @@ class JarvisConversationService : Service() {
         private val _wakeEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 4)
         val wakeEvents: SharedFlow<Unit> = _wakeEvents.asSharedFlow()
 
+        // DEV STYLE: mirrors the mic mute state so the Home dock updates when the
+        // user says "mic off" / "mic on" by voice or chat command.
+        private val _micMutedState = MutableStateFlow(runCatching { JarvisApp.instance.preferences.isMicMuted }.getOrDefault(false))
+        val micMutedState: StateFlow<Boolean> = _micMutedState.asStateFlow()
+
         fun setMicMuted(muted: Boolean) {
+            _micMutedState.value = muted
             activeInstance?.audioRecorder?.setMuted(muted)
             activeInstance?.let { service -> service.serviceScope.launch(Dispatchers.Main.immediate) { service.httpSession?.setMuted(muted) } }
         }
@@ -241,6 +247,31 @@ class JarvisConversationService : Service() {
 
         fun sendTextMessage(text: String) {
             val instance = activeInstance
+
+            // DEV STYLE: small device commands typed in chat run instantly - no LLM round-trip,
+            // and they work even while the mic is muted.
+            val quick = runCatching {
+                val parsed = com.jarvis.assistant.automation.command.CommandParser.parse(text)
+                parsed.command to parsed.confidence
+            }.getOrNull()
+            val quickCmd = quick?.first
+            if (quickCmd != null && quick.second >= 0.94f &&
+                quickCmd !is com.jarvis.assistant.automation.command.JarvisCommand.ConfirmAction &&
+                quickCmd !is com.jarvis.assistant.automation.command.JarvisCommand.DisambiguationChoice) {
+                val target = instance
+                if (target != null) {
+                    target.serviceScope.launch(Dispatchers.Main.immediate) {
+                        try {
+                            val result = JarvisApp.instance.commandExecutor.execute(quickCmd)
+                            target._events.emit(result)
+                            JarvisApp.instance.chatRepository.addTurn(text, result)
+                        } catch (e: Exception) {
+                            Log.e("JarvisService", "Quick command failed: ${e.message}")
+                        }
+                    }
+                    return
+                }
+            }
             if (instance?.httpSession != null) {
                 instance.serviceScope.launch(Dispatchers.Main.immediate) { instance.httpSession?.sendText(text) }
                 return
