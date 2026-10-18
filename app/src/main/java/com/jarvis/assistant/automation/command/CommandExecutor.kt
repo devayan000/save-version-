@@ -84,7 +84,10 @@ class CommandExecutor(
             is JarvisCommand.RecallFavoriteSong -> memoryManager.getFavoriteSongResponse()
             is JarvisCommand.RecallRoutine -> memoryManager.getRoutineResponse()
             is JarvisCommand.Decision -> com.jarvis.assistant.util.DecisionEngine.decide(command.topic)
-            is JarvisCommand.GoToBackground -> "Going to background."
+            is JarvisCommand.GoToBackground -> {
+                com.jarvis.assistant.JarvisApp.instance.moveAppToBack()
+                "Going to background."
+            }
             is JarvisCommand.SetUserName -> {
                 val app = com.jarvis.assistant.JarvisApp.instance
                 app.preferences.userName = command.name
