@@ -842,6 +842,8 @@ class JarvisConversationService : Service() {
     }
 
     private fun beginActiveConversation(wakeTriggered: Boolean = false) {
+        // DEV STYLE: "Hey Jarvis" wake triggers the pastel rainbow edge-lighting glow.
+        if (wakeTriggered) com.jarvis.assistant.ui.lighting.EdgeLightingService.show(this)
         if (_isSessionOn.value) return
         // DEV STYLE: free tier — without a license key the AI session is limited to 30 minutes per day
         if (!com.jarvis.assistant.backend.FreeUsageManager.canStartSession(this)) {
