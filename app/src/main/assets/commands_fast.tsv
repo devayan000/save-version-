@@ -1,0 +1,176 @@
+flash on	FLASH_ON
+torch on	FLASH_ON
+turn on flash	FLASH_ON
+ফ্ল্যাশ অন করো	FLASH_ON
+লাইট জ্বালাও	FLASH_ON
+टॉर्च चालू करो	FLASH_ON
+फ्लैश ऑन करो	FLASH_ON
+flash jalao	FLASH_ON
+torch chalu kar	FLASH_ON
+flash off	FLASH_OFF
+torch off	FLASH_OFF
+turn off flash	FLASH_OFF
+ফ্ল্যাশ বন্ধ করো	FLASH_OFF
+লাইট নিভাও	FLASH_OFF
+टॉर्च बंद करो	FLASH_OFF
+फ्लैश बंद करो	FLASH_OFF
+flash bondho	FLASH_OFF
+torch band karo	FLASH_OFF
+take screenshot	SCREENSHOT
+screenshot	SCREENSHOT
+capture screen	SCREENSHOT
+স্ক্রিনশট নাও	SCREENSHOT
+স্ক্রিনের ছবি তোলো	SCREENSHOT
+स्क्रीनशॉट लो	SCREENSHOT
+स्क्रीन की फोटो लो	SCREENSHOT
+screenshot nao	SCREENSHOT
+open camera	OPEN_CAMERA
+launch camera	OPEN_CAMERA
+camera kholo	OPEN_CAMERA
+ক্যামেরা খোলো	OPEN_CAMERA
+ক্যামেরা চালু করো	OPEN_CAMERA
+कैमरा खोलो	OPEN_CAMERA
+कैमरा चालू करो	OPEN_CAMERA
+open settings	OPEN_SETTINGS
+phone settings	OPEN_SETTINGS
+settings kholo	OPEN_SETTINGS
+সেটিংস খোলো	OPEN_SETTINGS
+ফোনের সেটিংস খোলো	OPEN_SETTINGS
+सेटिंग्स खोलो	OPEN_SETTINGS
+फोन की सेटिंग्स खोलो	OPEN_SETTINGS
+open gallery	OPEN_GALLERY
+open photos	OPEN_GALLERY
+gallery kholo	OPEN_GALLERY
+গ্যালারি খোলো	OPEN_GALLERY
+ছবি খোলো	OPEN_GALLERY
+गैलरी खोलो	OPEN_GALLERY
+फोटो खोलो	OPEN_GALLERY
+open browser	OPEN_BROWSER
+open chrome	OPEN_BROWSER
+browser kholo	OPEN_BROWSER
+ব্রাউজার খোলো	OPEN_BROWSER
+ক্রোম খোলো	OPEN_BROWSER
+ब्राउज़र खोलो	OPEN_BROWSER
+क्रोम खोलो	OPEN_BROWSER
+open youtube	OPEN_YOUTUBE
+youtube kholo	OPEN_YOUTUBE
+youtube chalao	OPEN_YOUTUBE
+ইউটিউব খোলো	OPEN_YOUTUBE
+ইউটিউব চালাও	OPEN_YOUTUBE
+यूट्यूब खोलो	OPEN_YOUTUBE
+यूट्यूब चलाओ	OPEN_YOUTUBE
+open whatsapp	OPEN_WHATSAPP
+whatsapp kholo	OPEN_WHATSAPP
+হোয়াটসঅ্যাপ খোলো	OPEN_WHATSAPP
+व्हाट्सऐप खोलो	OPEN_WHATSAPP
+volume up	VOLUME_UP
+increase volume	VOLUME_UP
+ভলিউম বাড়াও	VOLUME_UP
+শব্দ বাড়াও	VOLUME_UP
+आवाज़ बढ़ाओ	VOLUME_UP
+volume badhao	VOLUME_UP
+volume down	VOLUME_DOWN
+decrease volume	VOLUME_DOWN
+ভলিউম কমাও	VOLUME_DOWN
+শব্দ কমাও	VOLUME_DOWN
+आवाज़ कम करो	VOLUME_DOWN
+volume kam karo	VOLUME_DOWN
+mute phone	MUTE
+silence phone	MUTE
+ফোন সাইলেন্ট করো	MUTE
+শব্দ বন্ধ করো	MUTE
+फोन म्यूट करो	MUTE
+brightness up	BRIGHTNESS_UP
+increase brightness	BRIGHTNESS_UP
+উজ্জ্বলতা বাড়াও	BRIGHTNESS_UP
+ब्राइटनेस बढ़ाओ	BRIGHTNESS_UP
+brightness down	BRIGHTNESS_DOWN
+decrease brightness	BRIGHTNESS_DOWN
+উজ্জ্বলতা কমাও	BRIGHTNESS_DOWN
+ब्राइटनेस कम करो	BRIGHTNESS_DOWN
+open wifi settings	OPEN_WIFI_SETTINGS
+ওয়াইফাই সেটিংস খোলো	OPEN_WIFI_SETTINGS
+वाईफाई सेटिंग्स खोलो	OPEN_WIFI_SETTINGS
+open bluetooth settings	OPEN_BLUETOOTH_SETTINGS
+ব্লুটুথ সেটিংস খোলো	OPEN_BLUETOOTH_SETTINGS
+ब्लूटूथ सेटिंग्स खोलो	OPEN_BLUETOOTH_SETTINGS
+open battery settings	OPEN_BATTERY_SETTINGS
+ব্যাটারি সেটিংস খোলো	OPEN_BATTERY_SETTINGS
+बैटरी सेटिंग्स खोलो	OPEN_BATTERY_SETTINGS
+open calculator	OPEN_CALCULATOR
+calculator kholo	OPEN_CALCULATOR
+ক্যালকুলেটর খোলো	OPEN_CALCULATOR
+कैलकुलेटर खोलो	OPEN_CALCULATOR
+open clock	OPEN_CLOCK
+open alarm	OPEN_CLOCK
+ঘড়ি খোলো	OPEN_CLOCK
+अलार्म खोलो	OPEN_CLOCK
+open maps	OPEN_MAPS
+open google maps	OPEN_MAPS
+ম্যাপ খোলো	OPEN_MAPS
+गूगल मैप खोलो	OPEN_MAPS
+lock screen	LOCK_SCREEN
+lock phone	LOCK_SCREEN
+ফোন লক করো	LOCK_SCREEN
+स्क्रीन लॉक करो	LOCK_SCREEN
+go home	GO_HOME
+home screen	GO_HOME
+হোম স্ক্রিনে যাও	GO_HOME
+होम स्क्रीन पर जाओ	GO_HOME
+go back	BACK
+back	BACK
+পেছনে যাও	BACK
+ব্যাক করো	BACK
+वापस जाओ	BACK
+recent apps	RECENT_APPS
+রিসেন্ট অ্যাপস দেখাও	RECENT_APPS
+हाल के ऐप खोलो	RECENT_APPS
+open notifications	OPEN_NOTIFICATIONS
+নোটিফিকেশন দেখাও	OPEN_NOTIFICATIONS
+नोटिफिकेशन दिखाओ	OPEN_NOTIFICATIONS
+open calendar	OPEN_CALENDAR
+ক্যালেন্ডার খোলো	OPEN_CALENDAR
+कैलेंडर खोलो	OPEN_CALENDAR
+open contacts	OPEN_CONTACTS
+কন্টাক্ট খোলো	OPEN_CONTACTS
+संपर्क खोलो	OPEN_CONTACTS
+open messages	OPEN_MESSAGES
+মেসেজ খোলো	OPEN_MESSAGES
+मैसेज खोलो	OPEN_MESSAGES
+open phone	OPEN_PHONE
+open dialer	OPEN_PHONE
+ফোন অ্যাপ খোলো	OPEN_PHONE
+डायलर खोलो	OPEN_PHONE
+open files	OPEN_FILES
+file manager kholo	OPEN_FILES
+ফাইল ম্যানেজার খোলো	OPEN_FILES
+फाइल मैनेजर खोलो	OPEN_FILES
+open music	OPEN_MUSIC
+গান চালাও	OPEN_MUSIC
+म्यूजिक खोलो	OPEN_MUSIC
+gana chalao	OPEN_MUSIC
+stop music	STOP_MUSIC
+pause music	STOP_MUSIC
+গান বন্ধ করো	STOP_MUSIC
+गाना बंद करो	STOP_MUSIC
+next song	NEXT_TRACK
+পরের গান চালাও	NEXT_TRACK
+अगला गाना	NEXT_TRACK
+previous song	PREVIOUS_TRACK
+আগের গান	PREVIOUS_TRACK
+पिछला गाना	PREVIOUS_TRACK
+what time is it	READ_TIME
+সময় বলো	READ_TIME
+এখন কয়টা বাজে	READ_TIME
+समय बताओ	READ_TIME
+what is today s date	READ_DATE
+আজ কত তারিখ	READ_DATE
+आज की तारीख बताओ	READ_DATE
+battery status	BATTERY_STATUS
+ব্যাটারি কত	BATTERY_STATUS
+চার্জ কত আছে	BATTERY_STATUS
+बैटरी कितनी है	BATTERY_STATUS
+help	HELP
+show commands	HELP
+কী করতে পারো	HELP
+मदद करो	HELP
