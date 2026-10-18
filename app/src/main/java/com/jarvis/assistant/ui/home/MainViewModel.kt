@@ -79,6 +79,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         startTimeClock()
         observeServiceStatus()
         observeServiceEvents()
+        observeMicMutedState()
+    }
+
+    private fun observeMicMutedState() {
+        viewModelScope.launch {
+            JarvisConversationService.micMutedState.collect { _isMicMuted.value = it }
+        }
     }
 
     private fun startTimeClock() {
