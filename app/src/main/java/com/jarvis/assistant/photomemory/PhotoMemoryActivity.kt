@@ -37,14 +37,14 @@ class PhotoMemoryActivity : AppCompatActivity() {
     private fun buildUi() {
         val container = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(24, 24, 24, 24) }
         TextView(this).apply { text = "Photo Memory Library"; textSize = 20f; setPadding(0, 0, 0, 16); container.addView(this) }
-        container.addView(Button(this).apply { text = "Add Photo from Gallery"; setOnClickListener { openGalleryPicker() } })
+        container.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Add Photo from Gallery"; setOnClickListener { openGalleryPicker() } })
         val searchBox = EditText(this).apply { hint = "Search by description, tags, date..."; setSingleLine() }
         container.addView(searchBox)
-        container.addView(Button(this).apply { text = "Search"; setOnClickListener { refresh(searchBox.text.toString()) } })
+        container.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Search"; setOnClickListener { refresh(searchBox.text.toString()) } })
         listContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 16, 0, 0) }
         val scroll = ScrollView(this).apply { addView(listContainer); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f) }
         container.addView(scroll)
-        container.addView(Button(this).apply { text = "Close"; setOnClickListener { finish() } })
+        container.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Close"; setOnClickListener { finish() } })
         setContentView(container)
     }
 
@@ -92,7 +92,7 @@ class PhotoMemoryActivity : AppCompatActivity() {
 
         // OCR toggle
         val runOcr = booleanArrayOf(false)
-        container.addView(Button(ctx).apply { text = "Run OCR (on-device)"; setOnClickListener {
+        container.addView(Button(ctx).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Run OCR (on-device)"; setOnClickListener {
             val bmp = BitmapFactory.decodeFile(photoPath)
             OcrProcessor.recognize(bmp, { text ->
                 runOnUiThread { Toast.makeText(ctx, "OCR: " + text.take(100), Toast.LENGTH_LONG).show() }
@@ -139,8 +139,8 @@ class PhotoMemoryActivity : AppCompatActivity() {
             if (mem.ocrText.isNotBlank()) card.addView(TextView(this).apply { text = (if (mem.ocrDerived) "[OCR-derived] " else "") + mem.ocrText.take(100); textSize = 12f; setPadding(0, 2, 0, 0) })
 
             val btnRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 8, 0, 0) }
-            btnRow.addView(Button(this).apply { text = "Edit"; setOnClickListener { showEditDialog(mem.id) } })
-            btnRow.addView(Button(this).apply { text = "Delete"; setOnClickListener {
+            btnRow.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Edit"; setOnClickListener { showEditDialog(mem.id) } })
+            btnRow.addView(Button(this).apply { com.jarvis.assistant.util.PremiumUi.premiumButton(this); text = "Delete"; setOnClickListener {
                 MaterialAlertDialogBuilder(this@PhotoMemoryActivity).setTitle("Delete Photo Memory").setMessage("Permanently delete this photo and its metadata?")
                     .setPositiveButton("Delete") { _, _ -> store.deleteMemory(mem.id); refresh(searchQuery) }.setNegativeButton("Cancel", null).show()
             } })
