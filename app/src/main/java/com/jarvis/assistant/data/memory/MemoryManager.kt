@@ -443,13 +443,13 @@ class MemoryManager(
 
         if (all.isNotEmpty()) {
             sb.append("\n[ALL PERMANENT MEMORIES FROM DATABASE]:\n")
-            all.take(40).forEach { mem ->
+            all.take(150).forEach { mem ->
                 sb.append("- [${mem.category}] ${mem.rawText}\n")
             }
         }
 
         // Persistent Dialogue History across App Restarts
-        val recentTurns = chatRepository.turns.value.takeLast(15)
+        val recentTurns = chatRepository.turns.value.takeLast(50)
         if (recentTurns.isNotEmpty()) {
             sb.append("\n[PERSISTENT DIALOGUE HISTORY ACROSS APP RESTARTS]:\n")
             sb.append("You remember what was discussed in previous conversations with the user:\n")
@@ -463,6 +463,10 @@ class MemoryManager(
             }
         }
 
+                // DEV STYLE: SUPER AGENT core - never forgets, uses all stored memory.
+        sb.append("\n[AGENT CORE - SUPER AGENT MODE]:\n")
+        sb.append("- You are SUPER AGENT: an elite, autonomous AI. You NEVER forget facts, names, routines or instructions stored in the memory context above, and you use them naturally without being reminded.\n")
+        sb.append("- When the user tells you something new, treat it as permanent memory and recall it in later conversations.\n")
         return sb.toString()
     }
 }
